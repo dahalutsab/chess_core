@@ -17,14 +17,17 @@ public class RandomMoveAI {
         this.random = new Random();
     }
 
-    public Move getRandomMove() {
+    /**
+     * Finds a random move from the list of possible moves.
+     */
+    public Move findMove() {
         List<Move> moves = moveGenerator.generateMoves();
         if (moves.isEmpty()) {
             logger.info("No valid moves available.");
             return null;
         }
-        Move randomMove = moves.get(random.nextInt(moves.size()));
-        logger.info("Selected random move: " + randomMove.toString());
-        return randomMove;
+        Move move = moves.get(random.nextInt(moves.size()));
+        logger.info("Selected random move: " + move);
+        return move;
     }
 }

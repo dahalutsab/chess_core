@@ -1,40 +1,54 @@
 package com.utsab.chess_engine.board;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Logger;
 
 public class FenParser {
     private static final Logger logger = Logger.getLogger(FenParser.class.getName());
-    private static final Map<Character, Integer> PIECE_INDEX = new HashMap<>();
 
-    static {
-        PIECE_INDEX.put('P', 0); PIECE_INDEX.put('N', 1); PIECE_INDEX.put('B', 2);
-        PIECE_INDEX.put('R', 3); PIECE_INDEX.put('Q', 4); PIECE_INDEX.put('K', 5);
-        PIECE_INDEX.put('p', 6); PIECE_INDEX.put('n', 7); PIECE_INDEX.put('b', 8);
-        PIECE_INDEX.put('r', 9); PIECE_INDEX.put('q', 10); PIECE_INDEX.put('k', 11);
-    }
-
-    public static Bitboard loadFromFen(String fen, MoveGenerator moveGenerator) {
+    public static Bitboard loadFromFen(String fen) {
         Bitboard bitboard = new Bitboard();
         String[] parts = fen.split(" ");
         String[] ranks = parts[0].split("/");
-        moveGenerator.setWhiteToMove(parts[1].equals("w"));
 
-        int square = 56; // Start at a8 (rank 8, file a)
+        // Set whose turn it is
+        bitboard.setWhiteToMove(parts[1].equals("w"));
+
+        // Parse piece placement
+        int square = 56; // Start at a8 (top-left corner)
         for (String rank : ranks) {
             for (char c : rank.toCharArray()) {
                 if (Character.isDigit(c)) {
-                    square += Character.getNumericValue(c);
+                    square += Character.getNumericValue(c); // Skip empty squares
                 } else {
-                    bitboard.setPiece(PIECE_INDEX.get(c), square);
+                    int pieceIndex = "PNBRQKpnbrqk".indexOf(c);
+                    if (pieceIndex != -1) {
+                        // Get the current bitboard, modify it, and set it back
+                        long currentBitboard = bitboard.getPieceBitboard(pieceIndex);
+                        currentBitboard |= (1L << square);
+                        bitboard.setPieceBitboard(pieceIndex, currentBitboard);
+
+                        // Update occupied, whitePieces, and blackPieces
+                        long currentOccupied = bitboard.getOccupied();
+                        currentOccupied |= (1L << square);
+                        bitboard.setOccupied(currentOccupied);
+
+                        if (pieceIndex < 6) {
+                            long currentWhite = bitboard.getWhitePieces();
+                            currentWhite |= (1L << square);
+                            bitboard.setWhitePieces(currentWhite);
+                        } else {
+                            long currentBlack = bitboard.getBlackPieces();
+                            currentBlack |= (1L << square);
+                            bitboard.setBlackPieces(currentBlack);
+                        }
+                        logger.info("Placed piece " + c + " at square " + square);
+                    }
                     square++;
                 }
             }
-            square -= 16; // Move to next rank
+            square -= 16; // Move to the next rank (down one row)
         }
-        logger.info("Loaded FEN: " + fen);
-        bitboard.logPosition();
+        logger.info("Board after FEN parsing:\n" + bitboard);
         return bitboard;
     }
 }
