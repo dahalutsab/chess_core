@@ -10,24 +10,20 @@ public class FenParser {
         String[] parts = fen.split(" ");
         String[] ranks = parts[0].split("/");
 
-        // Set whose turn it is
         bitboard.setWhiteToMove(parts[1].equals("w"));
 
-        // Parse piece placement
-        int square = 56; // Start at a8 (top-left corner)
+        int square = 56; // Start at a8
         for (String rank : ranks) {
             for (char c : rank.toCharArray()) {
                 if (Character.isDigit(c)) {
-                    square += Character.getNumericValue(c); // Skip empty squares
+                    square += Character.getNumericValue(c);
                 } else {
                     int pieceIndex = "PNBRQKpnbrqk".indexOf(c);
                     if (pieceIndex != -1) {
-                        // Get the current bitboard, modify it, and set it back
                         long currentBitboard = bitboard.getPieceBitboard(pieceIndex);
                         currentBitboard |= (1L << square);
                         bitboard.setPieceBitboard(pieceIndex, currentBitboard);
 
-                        // Update occupied, whitePieces, and blackPieces
                         long currentOccupied = bitboard.getOccupied();
                         currentOccupied |= (1L << square);
                         bitboard.setOccupied(currentOccupied);
@@ -46,9 +42,9 @@ public class FenParser {
                     square++;
                 }
             }
-            square -= 16; // Move to the next rank (down one row)
+            square -= 16;
         }
-        logger.info("Board after FEN parsing:\n" + bitboard);
+        logger.info("Loaded FEN: " + fen + "\nBoard state:\n" + bitboard);
         return bitboard;
     }
 }

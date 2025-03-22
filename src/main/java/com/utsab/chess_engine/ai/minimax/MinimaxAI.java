@@ -5,58 +5,84 @@ import com.utsab.chess_engine.board.Move;
 import com.utsab.chess_engine.board.MoveGenerator;
 import com.utsab.chess_engine.board.Bitboard.MoveInfo;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Logger;
 
 public class MinimaxAI {
     private static final Logger logger = Logger.getLogger(MinimaxAI.class.getName());
     private final MoveGenerator moveGenerator;
+    private long nodes;
 
     public MinimaxAI(MoveGenerator moveGenerator) {
         this.moveGenerator = moveGenerator;
     }
 
-    /**
-     * Finds the best move using the minimax algorithm up to a specified depth.
-     */
-    public Move findBestMove(Bitboard board, int depth) {
+    public record MinimaxResult(Move bestMove, int bestScore, long nodes, List<Move> principalVariation, List<MoveScore> moveList) {}
+    public record MoveScore(Move move, int score) {}
+
+    public MinimaxResult findBestMove(Bitboard board, int depth) {
+        nodes = 0;
         List<Move> moves = moveGenerator.generateMoves();
         if (moves.isEmpty()) {
             logger.info("No valid moves available.");
-            return null;
+            return new MinimaxResult(null, 0, nodes, List.of(), List.of());
         }
+
+        // Improved move ordering: prioritize captures by value and checks
+        moves.sort(Comparator.comparingInt(move -> {
+            MoveInfo info = board.makeMove(move);
+            int captureValue = Evaluation.captureValue(info);
+            boolean isCheck = board.isInCheck(!board.isWhiteToMove());
+            board.undoMove(info);
+            return -(captureValue + (isCheck ? 1000 : 0)); // Higher value moves first
+        }));
 
         Move bestMove = null;
         int bestScore = board.isWhiteToMove() ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+        List<MoveScore> moveList = new ArrayList<>();
+        List<Move> principalVariation = new ArrayList<>();
 
         for (Move move : moves) {
             MoveInfo moveInfo = board.makeMove(move);
-            int score = minimax(board, depth - 1, !board.isWhiteToMove());
+            List<Move> pv = new ArrayList<>();
+            int score = minimax(board, depth - 1, !board.isWhiteToMove(), pv);
             board.undoMove(moveInfo);
+
+            moveList.add(new MoveScore(move, score));
+            logger.fine("Move " + move + " evaluated with score " + score);
 
             if (board.isWhiteToMove()) {
                 if (score > bestScore) {
                     bestScore = score;
                     bestMove = move;
+                    principalVariation.clear();
+                    principalVariation.add(move);
+                    principalVariation.addAll(pv);
                 }
             } else {
                 if (score < bestScore) {
                     bestScore = score;
                     bestMove = move;
+                    principalVariation.clear();
+                    principalVariation.add(move);
+                    principalVariation.addAll(pv);
                 }
             }
         }
-        logger.info("Best move: " + (bestMove != null ? bestMove.toString() : "None") + " with score: " + bestScore);
-        return bestMove;
+
+        logger.info("Evaluated " + nodes + " nodes. Best move: " +
+                (bestMove != null ? bestMove.toString() : "None") +
+                " with score: " + bestScore + ", PV: " + principalVariation);
+        return new MinimaxResult(bestMove, bestScore, nodes, principalVariation, moveList);
     }
 
-    /**
-     * Recursive minimax algorithm with depth limiting.
-     */
-    private int minimax(Bitboard board, int depth, boolean isMaximizing) {
+    private int minimax(Bitboard board, int depth, boolean isMaximizing, List<Move> pv) {
+        nodes++;
         if (depth == 0) {
             int score = Evaluation.evaluate(board);
-            logger.info("Evaluated position at depth 0: " + score);
+            logger.fine("Leaf node evaluated: " + score + " for board:\n" + board);
             return score;
         }
 
@@ -64,31 +90,49 @@ public class MinimaxAI {
         if (moves.isEmpty()) {
             if (board.isInCheck(board.isWhiteToMove())) {
                 int score = isMaximizing ? -10000 : 10000;
-                logger.info("Checkmate detected, score: " + score);
+                logger.fine("Checkmate detected, score: " + score);
                 return score;
             }
-            logger.info("Stalemate detected, score: 0");
+            logger.fine("Stalemate detected, score: 0");
             return 0;
         }
 
-        if (isMaximizing) {
-            int maxEval = Integer.MIN_VALUE;
-            for (Move move : moves) {
-                MoveInfo moveInfo = board.makeMove(move);
-                int eval = minimax(board, depth - 1, false);
-                board.undoMove(moveInfo);
-                maxEval = Math.max(maxEval, eval);
+        // Improved move ordering in recursive calls
+        moves.sort(Comparator.comparingInt(move -> {
+            MoveInfo info = board.makeMove(move);
+            int captureValue = Evaluation.captureValue(info);
+            boolean isCheck = board.isInCheck(!board.isWhiteToMove());
+            board.undoMove(info);
+            return -(captureValue + (isCheck ? 1000 : 0));
+        }));
+
+        int bestEval = isMaximizing ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+        List<Move> bestPv = new ArrayList<>();
+
+        for (Move move : moves) {
+            MoveInfo moveInfo = board.makeMove(move);
+            List<Move> subPv = new ArrayList<>();
+            int eval = minimax(board, depth - 1, !isMaximizing, subPv);
+            board.undoMove(moveInfo);
+
+            if (isMaximizing) {
+                if (eval > bestEval) {
+                    bestEval = eval;
+                    bestPv.clear();
+                    bestPv.add(move);
+                    bestPv.addAll(subPv);
+                }
+            } else {
+                if (eval < bestEval) {
+                    bestEval = eval;
+                    bestPv.clear();
+                    bestPv.add(move);
+                    bestPv.addAll(subPv);
+                }
             }
-            return maxEval;
-        } else {
-            int minEval = Integer.MAX_VALUE;
-            for (Move move : moves) {
-                MoveInfo moveInfo = board.makeMove(move);
-                int eval = minimax(board, depth - 1, true);
-                board.undoMove(moveInfo);
-                minEval = Math.min(minEval, eval);
-            }
-            return minEval;
         }
+
+        pv.addAll(bestPv);
+        return bestEval;
     }
 }
