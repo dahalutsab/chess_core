@@ -75,8 +75,8 @@ public class ChessController {
      * @return a JSON response with the best move, evaluation, and metadata
      * @throws ResponseStatusException if the FEN is invalid or depth is out of range
      */
-    @CrossOrigin(allowCredentials = "true", origins = "http://localhost:4200")
-    @GetMapping("/minimax-move")
+    @CrossOrigin(origins = "*")
+    @PostMapping("/minimax-move")
     public String getMinimaxMove(@RequestParam String fen, @RequestParam int depth) {
         if (depth < 1) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Depth must be at least 1");

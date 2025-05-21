@@ -113,7 +113,6 @@ public class Evaluation {
         // Mobility bonus
         score += mobility(board);
 
-        log.info("Evaluation score: {} for board:\n{}", score, board);
         return score;
     }
 
