@@ -114,14 +114,27 @@ public class MoveGenerator {
     }
 
     private void generateKnightMoves(List<Move> moves, int pieceIndex) {
+        if (pieceIndex != 1 && pieceIndex != 7) {
+            throw new IllegalArgumentException("Invalid piece index for knight: " + pieceIndex);
+        }
         long knights = bitboard.getPieceBitboard(pieceIndex);
         long notOwnPieces = ~(pieceIndex < 6 ? bitboard.getWhitePieces() : bitboard.getBlackPieces());
 
         while (knights != 0) {
             int from = Long.numberOfTrailingZeros(knights);
+            if (from < 0 || from >= 64) {
+                logger.warning("Invalid knight square: " + from);
+                knights &= knights - 1;
+                continue;
+            }
             long attacks = KNIGHT_ATTACKS[from] & notOwnPieces;
             while (attacks != 0) {
                 int to = Long.numberOfTrailingZeros(attacks);
+                if (to < 0 || to >= 64) {
+                    logger.warning("Invalid destination square: " + to);
+                    attacks &= attacks - 1;
+                    continue;
+                }
                 moves.add(new Move(from, to));
                 attacks &= attacks - 1;
             }
@@ -231,11 +244,26 @@ public class MoveGenerator {
     private static long[] precomputeKnightAttacks() {
         long[] attacks = new long[64];
         for (int square = 0; square < 64; square++) {
-            long k = 1L << square;
-            attacks[square] = ((k << 17) & ~FILE_MASKS[0]) | ((k << 15) & ~FILE_MASKS[7]) |
-                    ((k << 10) & ~(FILE_MASKS[6] | FILE_MASKS[7])) | ((k << 6) & ~(FILE_MASKS[0] | FILE_MASKS[1])) |
-                    ((k >>> 6) & ~(FILE_MASKS[6] | FILE_MASKS[7])) | ((k >>> 10) & ~(FILE_MASKS[0] | FILE_MASKS[1])) |
-                    ((k >>> 15) & ~FILE_MASKS[0]) | ((k >>> 17) & ~FILE_MASKS[7]);
+            long attacksForSquare = 0L;
+            int rank = square / 8;
+            int file = square % 8;
+
+            // Define knight move offsets: two up/down + one left/right, one up/down + two left/right
+            int[] offsets = {17, 15, 10, 6, -6, -10, -15, -17};
+            for (int offset : offsets) {
+                int toSquare = square + offset;
+                if (toSquare >= 0 && toSquare < 64) {
+                    int toRank = toSquare / 8;
+                    int toFile = toSquare % 8;
+                    // Ensure the move is valid (L-shaped: |Δrank| = 1, |Δfile| = 2 or |Δrank| = 2, |Δfile| = 1)
+                    int rankDiff = Math.abs(toRank - rank);
+                    int fileDiff = Math.abs(toFile - file);
+                    if ((rankDiff == 2 && fileDiff == 1) || (rankDiff == 1 && fileDiff == 2)) {
+                        attacksForSquare |= (1L << toSquare);
+                    }
+                }
+            }
+            attacks[square] = attacksForSquare;
         }
         return attacks;
     }

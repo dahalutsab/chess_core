@@ -30,24 +30,25 @@ public class MinimaxAI {
             return new MinimaxResult(null, 0, nodes, List.of(), List.of());
         }
 
-        // Improved move ordering: prioritize captures by value and checks
         moves.sort(Comparator.comparingInt(move -> {
             MoveInfo info = board.makeMove(move);
             int captureValue = Evaluation.captureValue(info);
             boolean isCheck = board.isInCheck(!board.isWhiteToMove());
             board.undoMove(info);
-            return -(captureValue + (isCheck ? 1000 : 0)); // Higher value moves first
+            return -(captureValue + (isCheck ? 1000 : 0));
         }));
 
         Move bestMove = null;
         int bestScore = board.isWhiteToMove() ? Integer.MIN_VALUE : Integer.MAX_VALUE;
         List<MoveScore> moveList = new ArrayList<>();
         List<Move> principalVariation = new ArrayList<>();
+        int alpha = Integer.MIN_VALUE;
+        int beta = Integer.MAX_VALUE;
 
         for (Move move : moves) {
             MoveInfo moveInfo = board.makeMove(move);
             List<Move> pv = new ArrayList<>();
-            int score = minimax(board, depth - 1, !board.isWhiteToMove(), pv);
+            int score = minimax(board, depth - 1, !board.isWhiteToMove(), alpha, beta, pv);
             board.undoMove(moveInfo);
 
             moveList.add(new MoveScore(move, score));
@@ -60,6 +61,7 @@ public class MinimaxAI {
                     principalVariation.clear();
                     principalVariation.add(move);
                     principalVariation.addAll(pv);
+                    alpha = Math.max(alpha, bestScore);
                 }
             } else {
                 if (score < bestScore) {
@@ -68,6 +70,7 @@ public class MinimaxAI {
                     principalVariation.clear();
                     principalVariation.add(move);
                     principalVariation.addAll(pv);
+                    beta = Math.min(beta, bestScore);
                 }
             }
         }
@@ -78,7 +81,7 @@ public class MinimaxAI {
         return new MinimaxResult(bestMove, bestScore, nodes, principalVariation, moveList);
     }
 
-    private int minimax(Bitboard board, int depth, boolean isMaximizing, List<Move> pv) {
+    private int minimax(Bitboard board, int depth, boolean isMaximizing, int alpha, int beta, List<Move> pv) {
         nodes++;
         if (depth == 0) {
             int score = Evaluation.evaluate(board);
@@ -97,7 +100,6 @@ public class MinimaxAI {
             return 0;
         }
 
-        // Improved move ordering in recursive calls
         moves.sort(Comparator.comparingInt(move -> {
             MoveInfo info = board.makeMove(move);
             int captureValue = Evaluation.captureValue(info);
@@ -112,7 +114,7 @@ public class MinimaxAI {
         for (Move move : moves) {
             MoveInfo moveInfo = board.makeMove(move);
             List<Move> subPv = new ArrayList<>();
-            int eval = minimax(board, depth - 1, !isMaximizing, subPv);
+            int eval = minimax(board, depth - 1, !isMaximizing, alpha, beta, subPv);
             board.undoMove(moveInfo);
 
             if (isMaximizing) {
@@ -122,12 +124,20 @@ public class MinimaxAI {
                     bestPv.add(move);
                     bestPv.addAll(subPv);
                 }
+                alpha = Math.max(alpha, bestEval);
+                if (beta <= alpha) {
+                    break; // Beta cutoff
+                }
             } else {
                 if (eval < bestEval) {
                     bestEval = eval;
                     bestPv.clear();
                     bestPv.add(move);
                     bestPv.addAll(subPv);
+                }
+                beta = Math.min(beta, bestEval);
+                if (beta <= alpha) {
+                    break; // Alpha cutoff
                 }
             }
         }

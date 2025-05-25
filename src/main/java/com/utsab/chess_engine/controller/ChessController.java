@@ -2,7 +2,7 @@ package com.utsab.chess_engine.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.utsab.chess_engine.ai.minimax.MinimaxAI;
-import com.utsab.chess_engine.ai.random.RandomMoveAI;
+import com.utsab.chess_engine.ai.random.RandomMoveGenerator;
 import com.utsab.chess_engine.board.Bitboard;
 import com.utsab.chess_engine.board.FenParser;
 import com.utsab.chess_engine.board.Move;
@@ -42,7 +42,7 @@ public class ChessController {
         try {
             Bitboard board = FenParser.loadFromFen(fen);
             MoveGenerator moveGenerator = new MoveGenerator(board);
-            RandomMoveAI ai = new RandomMoveAI(moveGenerator);
+            RandomMoveGenerator ai = new RandomMoveGenerator(moveGenerator);
 
             long startTime = System.nanoTime();
             Move move = ai.findRandomMove(board);
