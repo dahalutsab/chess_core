@@ -1,5 +1,3 @@
 spring:
-  application:
-    name: chess_engine
-server:
-  port: 8081
+  profiles:
+    active: local
