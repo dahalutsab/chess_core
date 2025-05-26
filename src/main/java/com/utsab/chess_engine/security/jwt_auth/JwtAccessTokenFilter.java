@@ -1,11 +1,11 @@
 package com.utsab.chess_engine.security.jwt_auth;
 
-import com.utsab.chess_engine.config.RSAKeyRecord;
-import com.utsab.chess_engine.security.WHITE_LIST_URLS;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWEObject;
 import com.nimbusds.jose.crypto.RSADecrypter;
 import com.nimbusds.jwt.JWTClaimsSet;
+import com.utsab.chess_engine.config.RSAKeyRecord;
+import com.utsab.chess_engine.security.WHITE_LIST_URLS;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,7 +19,6 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -90,10 +89,9 @@ public class JwtAccessTokenFilter extends OncePerRequestFilter {
     }
 
     private boolean isWhitelisted(String requestURI) {
-        AntPathMatcher pathMatcher = new AntPathMatcher();
         return Arrays.stream(WHITE_LIST_URLS.values())
                 .map(WHITE_LIST_URLS::getUrl)
-                .anyMatch(url -> pathMatcher.match(url, requestURI));
+                .anyMatch(url -> requestURI.matches(url.replace("**", ".*")));
     }
 
 

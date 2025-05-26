@@ -1,9 +1,9 @@
 package com.utsab.chess_engine.security.jwt_auth;
 
-import com.utsab.chess_engine.config.RSAKeyRecord;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.RSAEncrypter;
 import com.nimbusds.jwt.JWTClaimsSet;
+import com.utsab.chess_engine.config.RSAKeyRecord;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -32,7 +32,7 @@ public class JwtTokenGenerator {
             String roles = getRolesOfUser(authentication);
             String permissions = getPermissionsFromRoles(roles);
             JWTClaimsSet claims = new JWTClaimsSet.Builder()
-                    .issuer("Chess Engine")
+                    .issuer("CollegeHub")
                     .issueTime(Date.from(Instant.now()))
                     .expirationTime(Date.from(Instant.now().plus(150, ChronoUnit.MINUTES)))
                     .subject(authentication.getName())
@@ -61,7 +61,7 @@ public class JwtTokenGenerator {
             log.info("[JwtTokenGenerator:generateRefreshToken] Token Creation Started for: {}", authentication.getName());
 
             JWTClaimsSet claims = new JWTClaimsSet.Builder()
-                    .issuer("Chess Engine")
+                    .issuer("CollegeHub")
                     .issueTime(Date.from(Instant.now()))
                     .expirationTime(Date.from(Instant.now().plus(15, ChronoUnit.DAYS)))
                     .subject(authentication.getName())

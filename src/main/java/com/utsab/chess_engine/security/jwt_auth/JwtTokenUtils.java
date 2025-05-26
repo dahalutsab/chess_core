@@ -1,8 +1,8 @@
 package com.utsab.chess_engine.security.jwt_auth;
 
+import com.nimbusds.jwt.JWTClaimsSet;
 import com.utsab.chess_engine.config.user.UserInfoConfig;
 import com.utsab.chess_engine.user.repository.UserInfoRepository;
-import com.nimbusds.jwt.JWTClaimsSet;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
