@@ -69,17 +69,16 @@ public class AuthController extends BaseController {
                 AuthResponseMessages.USER_REGISTERED);
     }
 
+    @PostMapping("/verify-email")
     @Operation(
             summary = "Verify email",
             description = "Verifies the user's email using the provided token and email."
     )
-    @GetMapping("/verify-email")
     public ResponseEntity<ApiResponse<String>> verifyEmail(
             @RequestParam
-            @Parameter(description = "User's email address", required = true, example = "user@uchess.com") String email,
+            @Parameter(description = "Email address of the user", required = true, example = "user@uchess.com") String email,
             @RequestParam
-            @Parameter(description = "Verification token sent to the user's email", required = true, example = "468024") String token) {
-
+            @Parameter(description = "Verification token sent to the user's email", required = true, example = "123456") String token) {
         return successResponse(authService.verifyEmail(email, token),
                 AuthResponseMessages.EMAIL_VERIFIED);
     }

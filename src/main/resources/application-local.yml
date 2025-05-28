@@ -43,13 +43,9 @@ frontend:
   domain: ${server.host}:${frontend.port}
   forgot_password: /auth/reset-password
   verify_email: /auth/verify-email
-  login: /auth/login
 
 otp:
-  length: 6         # Length of OTP
-  alphanumeric: false # true for alphanumeric, false for numeric
   expiryInSeconds: 300 # OTP expiry time in seconds (5 minutes)
-
 
 springdoc:
   api-docs:
