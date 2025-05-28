@@ -32,7 +32,7 @@ public class JwtTokenGenerator {
             String roles = getRolesOfUser(authentication);
             String permissions = getPermissionsFromRoles(roles);
             JWTClaimsSet claims = new JWTClaimsSet.Builder()
-                    .issuer("CollegeHub")
+                    .issuer("UChess")
                     .issueTime(Date.from(Instant.now()))
                     .expirationTime(Date.from(Instant.now().plus(150, ChronoUnit.MINUTES)))
                     .subject(authentication.getName())
@@ -61,7 +61,7 @@ public class JwtTokenGenerator {
             log.info("[JwtTokenGenerator:generateRefreshToken] Token Creation Started for: {}", authentication.getName());
 
             JWTClaimsSet claims = new JWTClaimsSet.Builder()
-                    .issuer("CollegeHub")
+                    .issuer("UChess")
                     .issueTime(Date.from(Instant.now()))
                     .expirationTime(Date.from(Instant.now().plus(15, ChronoUnit.DAYS)))
                     .subject(authentication.getName())

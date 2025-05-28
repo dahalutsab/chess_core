@@ -23,18 +23,20 @@ public class InsertInitialUserInfo implements CommandLineRunner {
     private final RolesRepository rolesRepository;
     private final PasswordEncoder passwordEncoder;
     private static final String ADMIN_PASSWORD = "Admin@123";
+    private static final String ADMIN_EMAIL = "admin@uchess.com";
+    private static final String ADMIN_NAME = "Utsab Dahal";
 
     @Override
     public void run(String... args) {
-        if (userInfoRepository.findByEmailId("admin@chess_engine.com").isEmpty()) {
+        if (userInfoRepository.findByEmailId(ADMIN_EMAIL).isEmpty()) {
             UserEntity admin = new UserEntity();
-            admin.setFullName("Admin User");
+            admin.setFullName(ADMIN_NAME);
             admin.setPassword(passwordEncoder.encode(ADMIN_PASSWORD));
             admin.setRoles(List.of(
                     rolesRepository.findByName(UserRole.ADMIN.toString())
-                            .orElseThrow(() -> new RuntimeException("SUPER ADMIN Role not found"))
+                            .orElseThrow(() -> new RuntimeException("ADMIN Role not found"))
             ));
-            admin.setEmailId("admin@chess_engine.com");
+            admin.setEmailId(ADMIN_EMAIL);
             admin.setVerified(true);
             userInfoRepository.save(admin);
             log.info("Admin user inserted.");

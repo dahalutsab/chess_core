@@ -6,11 +6,8 @@ import com.utsab.chess_engine.auth.dto.request.forgot_password.ResetPasswordRequ
 import com.utsab.chess_engine.auth.dto.response.AuthResponse;
 import com.utsab.chess_engine.auth.dto.response.ForgotPasswordResponse;
 import com.utsab.chess_engine.auth.dto.response.UserRegistrationResponse;
-import com.utsab.chess_engine.user.dto.response.RolesResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.CookieValue;
-
-import java.util.List;
 
 public interface AuthService {
 
@@ -25,5 +22,7 @@ public interface AuthService {
 
     UserRegistrationResponse registerUser(UserRegistrationRequest registration);
 
-    List<RolesResponse> getRegistrationRoles();
+    String verifyEmail(String email, String token);
+
+    UserRegistrationResponse resendVerificationEmail(String email);
 }

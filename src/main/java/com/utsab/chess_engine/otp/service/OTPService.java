@@ -8,7 +8,7 @@ import com.utsab.chess_engine.user.entity.UserEntity;
 public interface OTPService {
     OTP saveOTP(UserEntity user, OTPPurpose purpose);
 
-    void validateOTP(UserEntity user, String otp);
+    void validateOTP(UserEntity user, String otp, OTPPurpose purpose);
 
     OTP getOTP(String otp, OTPPurpose purpose);
 }

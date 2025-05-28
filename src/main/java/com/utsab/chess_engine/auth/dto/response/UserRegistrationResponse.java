@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.net.URI;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @AllArgsConstructor
@@ -20,6 +21,7 @@ public class UserRegistrationResponse {
     String userEmail;
     URI profilePicture;
     List<RolesResponse> userRole;
+    LocalDateTime otpExpiryTime;
 
     public UserRegistrationResponse(UserEntity user) {
         this.id = user.getId();
@@ -29,5 +31,10 @@ public class UserRegistrationResponse {
         this.userRole = user.getRoles().stream()
                 .map(RolesResponse::new)
                 .toList();
+    }
+
+    public UserRegistrationResponse(UserEntity user, LocalDateTime otpExpiryTime) {
+        this(user);
+        this.otpExpiryTime = otpExpiryTime;
     }
 }

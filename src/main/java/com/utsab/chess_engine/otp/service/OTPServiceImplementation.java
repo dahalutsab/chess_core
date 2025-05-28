@@ -35,8 +35,8 @@ public class OTPServiceImplementation implements OTPService {
     }
 
     @Override
-    public void validateOTP(UserEntity user, String otp) {
-        OTP otpEntity = otpRepository.findByUserAndOtpValue(user, otp)
+    public void validateOTP(UserEntity user, String otp, OTPPurpose purpose) {
+        OTP otpEntity = otpRepository.findByUserAndOtpValueAndPurpose(user, otp, purpose)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid OTP"));
         if (otpEntity.getExpiryTime().isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("OTP has expired");

@@ -27,7 +27,6 @@ import com.utsab.chess_engine.user.role.repository.RolesRepository;
 import com.utsab.chess_engine.util.file.FileHandlerUtil;
 import com.utsab.chess_engine.util.file.FileType;
 import com.utsab.chess_engine.util.validator.EmailValidator;
-import com.utsab.chess_engine.util.validator.PhoneValidator;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
@@ -45,6 +44,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Objects;
 
@@ -66,6 +66,8 @@ public class AuthServiceImpl implements AuthService {
     private String frontEndUrl;
     @Value("${frontend.forgot_password}")
     private String forgotPasswordUrl;
+    @Value("${frontend.verify_email}")
+    private String verifyEmailUrl;
 
     @Override
     public AuthResponse getJwtTokensAfterAuthentication(AuthRequest authenticationRequest, HttpServletResponse response) {
@@ -198,8 +200,15 @@ public class AuthServiceImpl implements AuthService {
         userEntity.setFullName(registration.fullName());
         userEntity.setEmailId(registration.userEmail());
         userEntity.setPassword(new BCryptPasswordEncoder().encode(registration.password()));
+        Roles role = rolesRepository.findByName(UserRole.USER.name()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
+        userEntity.getRoles().add(role);
+        userEntity.setVerified(false);
+        OTP otp = otpService.saveOTP(userEntity, OTPPurpose.REGISTER);
+        String verifyUrl = this.frontEndUrl + verifyEmailUrl + "?email=" + registration.userEmail();
+        URI frontEndUri = URI.create(verifyUrl);
+        mailService.sendRegistrationMail(userEntity, otp, frontEndUri);
         if (registration.profileImage() == null || registration.profileImage().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Profile image is required");
+            return new UserRegistrationResponse(userInfoRepository.save(userEntity), otp.getExpiryTime());
         }
 
         FileType fileType = fileHandlerUtil.determineFileType(Objects.requireNonNull(registration.profileImage().getOriginalFilename()));
@@ -207,25 +216,53 @@ public class AuthServiceImpl implements AuthService {
             String fileName = fileHandlerUtil.saveFile(registration.profileImage(), registration.userEmail()).getFileDownloadUri();
             userEntity.setProfileImage(fileName);
             userInfoRepository.save(userEntity);
-            Roles role = rolesRepository.findByName(UserRole.USER.name()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
-            userEntity.getRoles().add(role);
-            userEntity.setVerified(true);
-
-            return new UserRegistrationResponse(userInfoRepository.save(userEntity));
+            return new UserRegistrationResponse(userInfoRepository.save(userEntity), otp.getExpiryTime());
         }
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid file type");
-
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, AuthExceptionMessages.INVALID_FILE_TYPE);
     }
 
     @Override
-    public List<RolesResponse> getRegistrationRoles() {
-        List<Roles> roles = rolesRepository.findAll();
-        if (roles.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, AuthExceptionMessages.ROLES_NOT_FOUND);
+    public String verifyEmail(String email, String token) {
+        if (!EmailValidator.isValid(email)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, AuthExceptionMessages.INVALID_EMAIL);
         }
-        return roles.stream()
-                .filter(role -> !"ADMIN".equalsIgnoreCase(role.getName()))
-                .map(RolesResponse::new)
-                .toList();
+
+        UserEntity user = userInfoRepository.findByEmailId(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, AuthExceptionMessages.USER_NOT_FOUND + email));
+
+        if (user.isVerified()) {
+            return AuthResponseMessages.EMAIL_ALREADY_VERIFIED;
+        }
+
+        OTP otp = otpService.getOTP(token, OTPPurpose.REGISTER);
+        if (!otp.getOtpValue().equals(token)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, AuthExceptionMessages.INVALID_OTP);
+        }
+        otpService.validateOTP(user,token, OTPPurpose.REGISTER);
+
+        user.setVerified(true);
+        userInfoRepository.save(user);
+        return AuthResponseMessages.EMAIL_VERIFIED;
+    }
+
+    @Override
+    public UserRegistrationResponse resendVerificationEmail(String email) {
+        if (!EmailValidator.isValid(email)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, AuthExceptionMessages.INVALID_EMAIL);
+        }
+
+        UserEntity user = userInfoRepository.findByEmailId(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, AuthExceptionMessages.USER_NOT_FOUND + email));
+
+        if (user.isVerified()) {
+            return new UserRegistrationResponse(user, null);
+        }
+
+        OTP otp = otpService.saveOTP(user, OTPPurpose.REGISTER);
+        String verifyUrl = this.frontEndUrl + verifyEmailUrl + "?email=" + email;
+        URI frontEndUri = URI.create(verifyUrl);
+        mailService.sendRegistrationMail(user, otp, frontEndUri);
+
+        return new UserRegistrationResponse(userInfoRepository.save(user), otp.getExpiryTime());
     }
 }

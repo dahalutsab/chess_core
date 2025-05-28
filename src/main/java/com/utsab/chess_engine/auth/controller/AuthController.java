@@ -33,7 +33,7 @@ public class AuthController extends BaseController {
             summary = "User login",
             description = "Authenticates a user using recipientEmail and password, then returns JWT access and refresh tokens."
     )
-    @PostMapping("/sign-in")
+    @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthResponse>> authenticateUser(
             @RequestBody AuthRequest authentication, HttpServletResponse response) {
 
@@ -60,13 +60,42 @@ public class AuthController extends BaseController {
             summary = "User registration",
             description = "Registers a new user with the provided details."
     )
-    @PostMapping("/sign-up")
+    @PostMapping("/register")
     public ResponseEntity<ApiResponse<UserRegistrationResponse>> registerUser(
             @ModelAttribute UserRegistrationRequest registration) {
 
         log.info("[AuthController:registerUser] User: {} is trying to register", registration.userEmail());
         return successResponse(authService.registerUser(registration),
                 AuthResponseMessages.USER_REGISTERED);
+    }
+
+    @Operation(
+            summary = "Verify email",
+            description = "Verifies the user's email using the provided token and email."
+    )
+    @GetMapping("/verify-email")
+    public ResponseEntity<ApiResponse<String>> verifyEmail(
+            @RequestParam
+            @Parameter(description = "User's email address", required = true, example = "user@uchess.com") String email,
+            @RequestParam
+            @Parameter(description = "Verification token sent to the user's email", required = true, example = "468024") String token) {
+
+        return successResponse(authService.verifyEmail(email, token),
+                AuthResponseMessages.EMAIL_VERIFIED);
+    }
+
+    //resend verification email
+    @Operation(
+            summary = "Resend verification email",
+            description = "Resends the verification email to the user."
+    )
+    @PostMapping("/resend-verification-email")
+    public ResponseEntity<ApiResponse<UserRegistrationResponse>> resendVerificationEmail(
+            @RequestParam
+            @Parameter(description = "User's email address", required = true, example = "user@uchess.com") String email) {
+        log.info("[AuthController:resendVerificationEmail] Resending verification email to: {}", email);
+        return successResponse(authService.resendVerificationEmail(email),
+                AuthResponseMessages.VERIFICATION_EMAIL_RESENT);
     }
 
     @Operation(

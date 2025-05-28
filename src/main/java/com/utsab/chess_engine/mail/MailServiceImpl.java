@@ -1,5 +1,6 @@
 package com.utsab.chess_engine.mail;
 
+import com.utsab.chess_engine.otp.entity.OTP;
 import com.utsab.chess_engine.user.entity.UserEntity;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
+import java.net.URI;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -35,8 +37,24 @@ public class MailServiceImpl implements MailService {
         context.setVariable("expiryTime", expiry.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         context.setVariable("email", email);
 
-        String content = templateEngine.process("forgot-password-otp.html", context);
+        String content = templateEngine.process("forgot-password-link.html", context);
         sendEmail(email, "Reset your password", content);
+    }
+
+    @Override
+    public void sendRegistrationMail(UserEntity userEntity, OTP otp, URI frontEndUri) {
+        String email = userEntity.getEmailId();
+        String name = userEntity.getFullName();
+
+        Context context = new Context();
+        context.setVariable("name", name);
+        context.setVariable("otp", otp.getOtpValue());
+        context.setVariable("expiryTime", otp.getExpiryTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        context.setVariable("email", email);
+        context.setVariable("frontEndUri", frontEndUri.toString());
+
+        String content = templateEngine.process("registration-otp.html", context);
+        sendEmail(email, "Verify your email address", content);
     }
 
     private void sendEmail(String to, String subject, String content) {
@@ -44,7 +62,7 @@ public class MailServiceImpl implements MailService {
             MimeMessage message = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setFrom("no-reply@utsab.chess_enginea.com");
+            helper.setFrom("no-reply@uchess.com");
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(content, true);

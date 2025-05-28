@@ -11,4 +11,6 @@ public interface OTPRepository extends JpaRepository<OTP, Long> {
     Optional<OTP> findByUserAndOtpValue(UserEntity user, String otp);
 
     Optional<OTP> findByOtpValueAndPurpose(String otp, OTPPurpose purpose);
+
+    Optional<OTP> findByUserAndOtpValueAndPurpose(UserEntity user, String otpValue, OTPPurpose purpose);
 }

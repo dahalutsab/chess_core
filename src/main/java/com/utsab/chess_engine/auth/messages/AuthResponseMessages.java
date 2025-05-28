@@ -4,6 +4,9 @@ public class AuthResponseMessages {
 
     public static final String USER_REGISTERED = "User registered successfully";
     public static final String REGISTRATION_ROLES_FETCHED = "Registration roles fetched successfully";
+    public static final String EMAIL_VERIFIED = "Email verified successfully";
+    public static final String EMAIL_ALREADY_VERIFIED = "Email is already verified";
+    public static final String VERIFICATION_EMAIL_RESENT = "Verification email resent successfully";
 
     private AuthResponseMessages() {}
     public static final String USER_AUTHENTICATED = "User authenticated successfully";
