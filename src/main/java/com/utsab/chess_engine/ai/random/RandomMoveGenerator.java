@@ -10,7 +10,7 @@ import java.util.Random;
 import java.util.logging.Logger;
 
 /**
- * A simple AI that selects a random legal move from the current position.
+ * A simple Class that selects a random legal move from the current position.
  */
 @Slf4j
 public class RandomMoveGenerator {
