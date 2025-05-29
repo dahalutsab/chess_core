@@ -1,4 +1,4 @@
-package com.utsab.chess_engine.board;
+package com.utsab.chess_engine.decision.board;
 
 /**
  * Represents a chess move with a starting and ending square.

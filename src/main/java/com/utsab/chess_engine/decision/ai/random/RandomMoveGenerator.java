@@ -1,8 +1,8 @@
-package com.utsab.chess_engine.ai.random;
+package com.utsab.chess_engine.decision.ai.random;
 
-import com.utsab.chess_engine.board.Bitboard;
-import com.utsab.chess_engine.board.Move;
-import com.utsab.chess_engine.board.MoveGenerator;
+import com.utsab.chess_engine.decision.board.Bitboard;
+import com.utsab.chess_engine.decision.board.Move;
+import com.utsab.chess_engine.decision.board.MoveGenerator;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;

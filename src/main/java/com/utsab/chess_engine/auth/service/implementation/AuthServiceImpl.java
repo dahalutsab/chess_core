@@ -183,9 +183,10 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public String resetPassword(ResetPasswordRequest resetPasswordRequest) {
-        UserEntity user = new UserEntity();
-        user.setPassword(new BCryptPasswordEncoder().encode(resetPasswordRequest.getNewPassword()));
-        userInfoRepository.save(user);
+        OTP otp = otpService.getOTP(resetPasswordRequest.getOtp(), OTPPurpose.FORGOT_PASSWORD);
+        UserEntity userEntity = otp.getUser();
+        userEntity.setPassword(new BCryptPasswordEncoder().encode(resetPasswordRequest.getNewPassword()));
+        userInfoRepository.save(userEntity);
         return AuthResponseMessages.PASSWORD_RESET_SUCCESS;
     }
 

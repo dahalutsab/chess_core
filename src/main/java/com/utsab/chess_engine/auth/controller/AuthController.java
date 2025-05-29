@@ -117,7 +117,6 @@ public class AuthController extends BaseController {
     @PostMapping("/reset-password")
     public ResponseEntity<ApiResponse<String>> resetPassword(
             @RequestBody ResetPasswordRequest resetPasswordRequest) {
-
         return successResponse(authService.resetPassword(resetPasswordRequest),
                 AuthResponseMessages.PASSWORD_RESET_SUCCESSFULLY);
     }

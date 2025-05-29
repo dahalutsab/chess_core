@@ -5,7 +5,7 @@
  * Time:3:10 PM
  */
 
-package com.utsab.chess_engine.ai.minimax.response;
+package com.utsab.chess_engine.decision.ai.minimax.response;
 
 public class MiniMaxResponse {
     private String bestMove;

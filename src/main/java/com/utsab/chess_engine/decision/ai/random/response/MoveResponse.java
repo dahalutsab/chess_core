@@ -5,7 +5,7 @@
  * Time:3:10 PM
  */
 
-package com.utsab.chess_engine.ai.random.response;
+package com.utsab.chess_engine.decision.ai.random.response;
 
 public class MoveResponse {
     private String bestMove;

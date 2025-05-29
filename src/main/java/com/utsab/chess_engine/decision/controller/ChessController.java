@@ -1,12 +1,12 @@
-package com.utsab.chess_engine.controller;
+package com.utsab.chess_engine.decision.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.utsab.chess_engine.ai.minimax.MinimaxAI;
-import com.utsab.chess_engine.ai.random.RandomMoveGenerator;
-import com.utsab.chess_engine.board.Bitboard;
-import com.utsab.chess_engine.board.FenParser;
-import com.utsab.chess_engine.board.Move;
-import com.utsab.chess_engine.board.MoveGenerator;
+import com.utsab.chess_engine.decision.ai.minimax.MinimaxAI;
+import com.utsab.chess_engine.decision.ai.random.RandomMoveGenerator;
+import com.utsab.chess_engine.decision.board.Bitboard;
+import com.utsab.chess_engine.decision.board.FenParser;
+import com.utsab.chess_engine.decision.board.Move;
+import com.utsab.chess_engine.decision.board.MoveGenerator;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;

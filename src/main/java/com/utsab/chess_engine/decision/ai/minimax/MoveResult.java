@@ -5,8 +5,8 @@
  * Time:3:14 PM
  */
 
-package com.utsab.chess_engine.ai.minimax;
+package com.utsab.chess_engine.decision.ai.minimax;
 
-import com.utsab.chess_engine.board.Move;
+import com.utsab.chess_engine.decision.board.Move;
 
 public record MoveResult(Move move, int score) {}

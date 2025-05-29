@@ -1,4 +1,4 @@
-package com.utsab.chess_engine.board;
+package com.utsab.chess_engine.decision.board;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,8 +1,8 @@
-package com.utsab.chess_engine.ai.minimax;
+package com.utsab.chess_engine.decision.ai.minimax;
 
-import com.utsab.chess_engine.board.Bitboard;
-import com.utsab.chess_engine.board.Bitboard.MoveInfo;
-import com.utsab.chess_engine.board.MoveGenerator;
+import com.utsab.chess_engine.decision.board.Bitboard;
+import com.utsab.chess_engine.decision.board.Bitboard.MoveInfo;
+import com.utsab.chess_engine.decision.board.MoveGenerator;
 import lombok.extern.slf4j.Slf4j;
 
 
