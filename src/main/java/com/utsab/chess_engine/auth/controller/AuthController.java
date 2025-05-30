@@ -19,9 +19,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import static com.utsab.chess_engine.common.constants.APIConstants.API_BASE;
+
 
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping(API_BASE + "/auth")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Authentication", description = "APIs for user authentication and password management")

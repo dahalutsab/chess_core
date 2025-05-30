@@ -30,13 +30,7 @@ public class MinimaxAI {
             return new MinimaxResult(null, 0, nodes, List.of(), List.of());
         }
 
-        moves.sort(Comparator.comparingInt(move -> {
-            MoveInfo info = board.makeMove(move);
-            int captureValue = Evaluation.captureValue(info);
-            boolean isCheck = board.isInCheck(!board.isWhiteToMove());
-            board.undoMove(info);
-            return -(captureValue + (isCheck ? 1000 : 0));
-        }));
+        sorter(board, moves);
 
         Move bestMove = null;
         int bestScore = board.isWhiteToMove() ? Integer.MIN_VALUE : Integer.MAX_VALUE;
@@ -81,6 +75,16 @@ public class MinimaxAI {
         return new MinimaxResult(bestMove, bestScore, nodes, principalVariation, moveList);
     }
 
+    private void sorter(Bitboard board, List<Move> moves) {
+        moves.sort(Comparator.comparingInt(move -> {
+            MoveInfo info = board.makeMove(move);
+            int captureValue = Evaluation.captureValue(info);
+            boolean isCheck = board.isInCheck(!board.isWhiteToMove());
+            board.undoMove(info);
+            return -(captureValue + (isCheck ? 1000 : 0));
+        }));
+    }
+
     private int minimax(Bitboard board, int depth, boolean isMaximizing, int alpha, int beta, List<Move> pv) {
         nodes++;
         if (depth == 0) {
@@ -100,13 +104,7 @@ public class MinimaxAI {
             return 0;
         }
 
-        moves.sort(Comparator.comparingInt(move -> {
-            MoveInfo info = board.makeMove(move);
-            int captureValue = Evaluation.captureValue(info);
-            boolean isCheck = board.isInCheck(!board.isWhiteToMove());
-            board.undoMove(info);
-            return -(captureValue + (isCheck ? 1000 : 0));
-        }));
+        sorter(board, moves);
 
         int bestEval = isMaximizing ? Integer.MIN_VALUE : Integer.MAX_VALUE;
         List<Move> bestPv = new ArrayList<>();

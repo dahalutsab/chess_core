@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  * REST controller for chess engine operations, supporting random and Minimax-based move generation.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class ChessController {
     private static final Logger logger = Logger.getLogger(ChessController.class.getName());
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -79,9 +79,9 @@ public class ChessController {
     @PostMapping("/minimax-move")
     public String getMinimaxMove(@RequestParam String fen, @RequestParam int depth) {
         if (depth < 1) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Depth must be at least 1");
-        }
 
+   throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Depth must be at least 1");
+        }
         try {
             Bitboard board = FenParser.loadFromFen(fen);
             MoveGenerator moveGenerator = new MoveGenerator(board);

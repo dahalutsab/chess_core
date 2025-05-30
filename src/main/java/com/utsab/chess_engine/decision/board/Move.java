@@ -3,10 +3,7 @@ package com.utsab.chess_engine.decision.board;
 /**
  * Represents a chess move with a starting and ending square.
  */
-public final class Move {
-    private final int fromSquare;
-    private final int toSquare;
-
+public record Move(int fromSquare, int toSquare) {
     /**
      * Constructs a Move with the specified from and to squares.
      *
@@ -14,16 +11,11 @@ public final class Move {
      * @param toSquare   the destination square (0-63)
      * @throws IllegalArgumentException if squares are out of bounds
      */
-    public Move(int fromSquare, int toSquare) {
+    public Move {
         if (fromSquare < 0 || fromSquare > 63 || toSquare < 0 || toSquare > 63) {
             throw new IllegalArgumentException("Square indices must be between 0 and 63: " + fromSquare + ", " + toSquare);
         }
-        this.fromSquare = fromSquare;
-        this.toSquare = toSquare;
     }
-
-    public int fromSquare() { return fromSquare; }
-    public int toSquare() { return toSquare; }
 
     /**
      * Returns the move in UCI notation (e.g., "e2e4").
@@ -40,16 +32,4 @@ public final class Move {
         return files[fromFile] + fromRank + files[toFile] + toRank;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Move move = (Move) o;
-        return fromSquare == move.fromSquare && toSquare == move.toSquare;
-    }
-
-    @Override
-    public int hashCode() {
-        return 31 * fromSquare + toSquare;
-    }
 }
