@@ -85,10 +85,10 @@ public class Board {
             pieceList[endSquare] = Piece.KING;
             zobrist = Zobrist.updatePiece(zobrist, startSquare, Piece.KING, isWhiteToMove);
             zobrist = Zobrist.updatePiece(zobrist, endSquare, Piece.KING, isWhiteToMove);
-            boolean isKingside = BoardUtils.getFile(endSquare) == 6;
+            boolean isKingSide = BoardUtils.getFile(endSquare) == 6;
             int rookStartSquare;
             int rookEndSquare;
-            if (isKingside) {
+            if (isKingSide) {
                 rookStartSquare = isWhiteToMove ? 7 : 63;
                 rookEndSquare = isWhiteToMove ? 5 : 61;
             } else {
@@ -181,10 +181,10 @@ public class Board {
 
         if (lastMove.isCastling()) {
             toggleSquares(Piece.KING, isWhiteToMove, endSquare, startSquare);
-            boolean isKingside = BoardUtils.getFile(endSquare) == 6;
+            boolean isKingSide = BoardUtils.getFile(endSquare) == 6;
             int rookStartSquare;
             int rookEndSquare;
-            if (isKingside) {
+            if (isKingSide) {
                 rookStartSquare = isWhiteToMove ? 5 : 61;
                 rookEndSquare = isWhiteToMove ? 7 : 63;
             } else {
@@ -220,7 +220,7 @@ public class Board {
                 toggleSquare(gameState.getCapturedPiece(), !isWhiteToMove, endSquare);
             }
             pieceList[startSquare] = piece;
-            pieceList[endSquare] = gameState.getCapturedPiece() != null ? gameState.getCapturedPiece() : null;;
+            pieceList[endSquare] = gameState.getCapturedPiece() != null ? gameState.getCapturedPiece() : null;
         }
 
         gameState = gameStateHistory.pop();

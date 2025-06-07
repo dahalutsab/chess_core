@@ -36,7 +36,7 @@ public class UChessServiceImplementation implements UChessService {
                 Application.ENGINE.thinkSync(1000);
 
         String bestMove = Notation.toNotation(result.move());
-        String bestMoveSan = SAN.fromMove(result.move(), Application.ENGINE.getBoard());
+        String bestMoveSan = SAN.toSan(result.move(), Application.ENGINE.getBoard());
 
         return new UChessResponse(gameId, fen, bestMove, bestMoveSan);
     }

@@ -38,7 +38,7 @@ public class JwtAccessTokenFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        logRequestDetails(request);
+//        logRequestDetails(request);
 
         String requestURI = request.getRequestURI();
         if (isWhitelisted(requestURI)) {

@@ -11,16 +11,30 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+/**
+ * A utility class for parsing and generating Forsyth-Edwards Notation (FEN), a standard notation
+ * to represent chess positions. FEN encodes the board state, active color, castling availability,
+ * en passant target, halfmove clock, and fullmove number.
+ *
+ * @author Utsab Dahal
+ * @version 1.0
+ * @since 2025-06-07
+ * @see <a href="https://www.chessprogramming.org/Forsyth-Edwards_Notation">Chess Programming Wiki - FEN</a>
+ */
 public class FEN {
 
     public static final String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
+    /**
+     * Converts a FEN string into a ChessBoard object.
+     *
+     * @param fen the FEN string to parse (e.g., "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+     * @return a new ChessBoard instance representing the parsed position
+     * @throws IllegalArgumentException if the FEN string is malformed or invalid
+     */
     public static Board toBoard(String fen) {
-
         try {
-
             String[] parts = fen.split(" ");
-
             String[] files = parts[0].split("/");
 
             long whitePawns = 0L;
@@ -39,7 +53,7 @@ public class FEN {
             List<List<String>> rankFileHash = Arrays.stream(files)
                     .map(file -> Arrays.stream(file.split(""))
                             .flatMap(FEN::parseSquare)
-                            .toList())
+                            .collect(Collectors.toList()))
                     .collect(Collectors.toList());
             Collections.reverse(rankFileHash);
 
@@ -70,7 +84,6 @@ public class FEN {
             int castlingRights = parseCastlingRights(parts[2]);
             int enPassantFile = parseEnPassantFile(parts[3]);
             int fiftyMoveCounter = parts.length > 4 ? parseFiftyMoveCounter(parts[4]) : 0;
-            // This implementation does not require the full move counter (parts[5]).
 
             Board board = new Board();
             board.setWhitePawns(whitePawns);
@@ -99,22 +112,35 @@ public class FEN {
         } catch (Exception e) {
             throw new IllegalArgumentException(fen, e);
         }
-
     }
 
+    /**
+     * Converts a ChessBoard object into a FEN string.
+     * Note: This method is currently a placeholder and requires full implementation.
+     *
+     * @param board the chess board to convert
+     * @return the FEN string representation (currently returns null)
+     * @throws IllegalArgumentException if the board state is invalid
+     */
     public static String toFEN(Board board) {
         try {
-            // TODO
             String isWhiteToMove = toSideToMove(board.isWhiteToMove());
             String castlingRights = toCastlingRights(board.getGameState().getCastlingRights());
             String enPassantFile = toEnPassantFile(board.getGameState().getEnPassantFile());
             String fiftyMoveCounter = toFiftyMoveCounter(board.getGameState().getFiftyMoveCounter());
-            return null;
+            return null; // TODO: Implement full FEN generation
         } catch (Exception e) {
             throw new IllegalArgumentException(board.toString(), e);
         }
     }
 
+    /**
+     * Parses the side to move from the FEN string.
+     *
+     * @param sideToMove the FEN side to move indicator ("w" or "b")
+     * @return true for white, false for black
+     * @throws IllegalArgumentException if the indicator is invalid
+     */
     private static boolean parseSideToMove(String sideToMove) {
         return switch (sideToMove) {
             case "w" -> true;
@@ -123,10 +149,22 @@ public class FEN {
         };
     }
 
+    /**
+     * Converts the side to move to a FEN string representation.
+     *
+     * @param sideToMove true for white, false for black
+     * @return "w" for white, "b" for black
+     */
     private static String toSideToMove(boolean sideToMove) {
         return sideToMove ? "w" : "b";
     }
 
+    /**
+     * Parses castling rights from the FEN string.
+     *
+     * @param castlingRights the FEN castling rights string (e.g., "KQkq" or "-")
+     * @return a bitmask representing castling rights
+     */
     private static int parseCastlingRights(String castlingRights) {
         int castlingRightsMask = 0b0000;
         if (castlingRights.contains("K")) {
@@ -144,6 +182,12 @@ public class FEN {
         return castlingRightsMask;
     }
 
+    /**
+     * Converts castling rights bitmask to a FEN string representation.
+     *
+     * @param castlingRights the bitmask of castling rights
+     * @return the FEN castling rights string (e.g., "KQkq" or "-")
+     */
     private static String toCastlingRights(int castlingRights) {
         if (castlingRights == 0b0000) {
             return "-";
@@ -164,6 +208,12 @@ public class FEN {
         return castlingRightsString;
     }
 
+    /**
+     * Parses the en passant file from the FEN string.
+     *
+     * @param enPassantFile the FEN en passant target square (e.g., "e3" or "-")
+     * @return the file index (-1 if no en passant)
+     */
     private static int parseEnPassantFile(String enPassantFile) {
         if (enPassantFile.equals("-")) {
             return -1;
@@ -172,6 +222,12 @@ public class FEN {
         return BoardUtils.getFile(square);
     }
 
+    /**
+     * Converts the en passant file index to a FEN string representation.
+     *
+     * @param enPassantFile the file index (-1 for no en passant)
+     * @return the FEN en passant target square (e.g., "e3" or "-")
+     */
     private static String toEnPassantFile(int enPassantFile) {
         if (enPassantFile == -1) {
             return "-";
@@ -179,14 +235,33 @@ public class FEN {
         return Integer.valueOf(Notation.toNotation(enPassantFile)).toString();
     }
 
+    /**
+     * Parses the fifty-move counter from the FEN string.
+     *
+     * @param fiftyMoveCounter the FEN fifty-move counter string
+     * @return the integer value of the counter
+     */
     private static int parseFiftyMoveCounter(String fiftyMoveCounter) {
         return Character.isDigit(fiftyMoveCounter.charAt(0)) ? Integer.parseInt(fiftyMoveCounter) : 0;
     }
 
+    /**
+     * Converts the fifty-move counter to a FEN string representation.
+     *
+     * @param fiftyMoveCounter the counter value
+     * @return the string representation of the counter
+     */
     private static String toFiftyMoveCounter(int fiftyMoveCounter) {
         return Integer.toString(fiftyMoveCounter);
     }
 
+    /**
+     * Parses a single square character into a stream of piece or empty square indicators.
+     *
+     * @param square the character to parse (e.g., "P" or "2")
+     * @return a stream of piece codes or "x" for empty squares
+     * @throws IllegalArgumentException if the character is invalid
+     */
     private static Stream<String> parseSquare(String square) {
         if (square.length() != 1) {
             throw new IllegalArgumentException("Illegal square char! " + square);
@@ -194,6 +269,4 @@ public class FEN {
         boolean isLetter = Character.isLetter(square.charAt(0));
         return isLetter ? Stream.of(square) : IntStream.range(0, Integer.parseInt(square)).mapToObj(i -> "x");
     }
-
-
 }
