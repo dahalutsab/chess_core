@@ -1,6 +1,9 @@
 package com.utsab.chess_engine.minimax.service.impl;
 
 import com.utsab.chess_engine.core.chess.Application;
+import com.utsab.chess_engine.core.chess.search.SearchResult;
+import com.utsab.chess_engine.core.chess.utils.notation.Notation;
+import com.utsab.chess_engine.core.chess.utils.notation.SAN;
 import com.utsab.chess_engine.minimax.dto.UChessRequest;
 import com.utsab.chess_engine.minimax.dto.UChessResponse;
 import com.utsab.chess_engine.minimax.service.UChessService;
@@ -29,11 +32,11 @@ public class UChessServiceImplementation implements UChessService {
         Application.ENGINE.setPosition(fen, new ArrayList<>());
 
         // Think for a default time (e.g., 1000ms)
-        com.utsab.chess_engine.core.chess.search.SearchResult result =
+        SearchResult result =
                 Application.ENGINE.thinkSync(1000);
 
-        String bestMove = com.utsab.chess_engine.core.chess.utils.notation.Notation.toNotation(result.move());
-        String bestMoveSan = result.move().toString(); // Or use a SAN converter if available
+        String bestMove = Notation.toNotation(result.move());
+        String bestMoveSan = SAN.fromMove(result.move(), Application.ENGINE.getBoard());
 
         return new UChessResponse(gameId, fen, bestMove, bestMoveSan);
     }
