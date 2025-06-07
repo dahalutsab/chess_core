@@ -172,4 +172,13 @@ public class Engine {
                 .orElseThrow(() -> new IllegalArgumentException("Illegal move " + Notation.toNotation(move)));
     }
 
+    public SearchResult thinkSync(int i) {
+        if (hasBookMove()) {
+            Move bookMove = getLegalMove(book.getBookMove(board.getGameState().getZobristKey()));
+            return new SearchResult(0, bookMove, 0, 0, 0, 0);
+        }
+        stopThinking();
+        think = CompletableFuture.supplyAsync(() -> think(i));
+        return think.join();
+    }
 }

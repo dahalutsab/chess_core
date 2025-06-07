@@ -8,7 +8,7 @@ import java.util.logging.Logger;
  */
 public class Bitboard {
     private static final Logger logger = Logger.getLogger(Bitboard.class.getName());
-    private long[] pieceBitboards; // 0-5: white P,N,B,R,Q,K; 6-11: black p,n,b,r,q,k
+    private final long[] pieceBitboards; // 0-5: white P,N,B,R,Q,K; 6-11: black p,n,b,r,q,k
     private long occupied;        // All occupied squares
     private long whitePieces;     // All white pieces
     private long blackPieces;     // All black pieces

@@ -22,7 +22,7 @@ spring:
   jpa:
     show_sql: true
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     defer-datasource-initialization: true
     properties:
       dialect: org.hibernate.dialect.PostgreSQLDialect

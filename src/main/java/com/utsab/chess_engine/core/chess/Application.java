@@ -20,10 +20,10 @@ import java.util.stream.Collectors;
  * which is responsible for actually playing the game of chess.
  * @see <a href="https://www.chessprogramming.org/UCI">Chess Programming Wiki</a>
  */
-@FieldDefaults(level = AccessLevel.PRIVATE)
+//@FieldDefaults(level = AccessLevel.PRIVATE)
 public class Application {
 
-    static final Engine ENGINE = EngineInitializer.loadEngine();
+    public static final Engine ENGINE = EngineInitializer.loadEngine();
     static final Scanner SCANNER = new Scanner(System.in);
     static final String[] POSITION_LABELS = new String[] { "position", "fen", "moves" };
     static final String[] GO_LABELS = new String[] { "go", "movetime", "wtime", "btime", "winc", "binc", "movestogo" };
