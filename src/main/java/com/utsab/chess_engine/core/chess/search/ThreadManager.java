@@ -1,6 +1,6 @@
 package com.utsab.chess_engine.core.chess.search;
 
-import com.utsab.chess_engine.core.chess.Application;
+import com.utsab.chess_engine.core.chess.Core;
 import com.utsab.chess_engine.core.chess.evaluation.Score;
 
 public class ThreadManager {
@@ -14,7 +14,7 @@ public class ThreadManager {
     public synchronized void handleSearchResult(SearchResult searchResult) {
         if (searchResult.depth() > depthLogged
                 && (searchResult.time() > 0 || Score.isMateScore(searchResult.eval()))) {
-            Application.writeSearchInfo(searchResult);
+            Core.writeSearchInfo(searchResult);
             depthLogged++;
         }
     }

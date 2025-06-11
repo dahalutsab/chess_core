@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class EngineInitializer {
 
-    static final String DEFAULT_CONFIG_LOCATION = "/engine_config.json";
+    static final String DEFAULT_CONFIG_LOCATION = "/uchess_config.json";
     static final String DEFAULT_BOOK_LOCATION = "/opening_book.txt";
     static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 

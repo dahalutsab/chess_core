@@ -8,8 +8,6 @@ import com.utsab.chess_engine.core.chess.evaluation.Score;
 import com.utsab.chess_engine.core.chess.search.SearchResult;
 import com.utsab.chess_engine.core.chess.utils.notation.FEN;
 import com.utsab.chess_engine.core.chess.utils.notation.Notation;
-import lombok.AccessLevel;
-import lombok.experimental.FieldDefaults;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -21,7 +19,7 @@ import java.util.stream.Collectors;
  * @see <a href="https://www.chessprogramming.org/UCI">Chess Programming Wiki</a>
  */
 //@FieldDefaults(level = AccessLevel.PRIVATE)
-public class Application {
+public class Core {
 
     public static final Engine ENGINE = EngineInitializer.loadEngine();
     static final Scanner SCANNER = new Scanner(System.in);
@@ -29,7 +27,7 @@ public class Application {
     static final String[] GO_LABELS = new String[] { "go", "movetime", "wtime", "btime", "winc", "binc", "movestogo" };
     static final String[] SETOPTION_LABELS = new String[] { "setoption", "name", "value" };
 
-    public static void main(String[] args) {
+    public static void UCI() {
         String command = "";
         while (!command.equals("quit")) {
             command = readCommand();
@@ -51,7 +49,7 @@ public class Application {
         }
     }
 
-    private static void handleUci() {
+    public static void handleUci() {
         write("id name UChess");
         write("id author Utsab Dahal");
         EngineConfig config = ENGINE.getConfig();
@@ -64,11 +62,11 @@ public class Application {
         write("uciok");
     }
 
-    private static void handleIsReady() {
+    public static void handleIsReady() {
         write("readyok");
     }
 
-    private static void handleSetOption(String command) {
+    public static void handleSetOption(String command) {
         String optionType = getLabelString(command, "name", SETOPTION_LABELS, "");
         switch (optionType) {
             case "Hash":     setHashSize(command); break;
@@ -79,12 +77,12 @@ public class Application {
         }
     }
 
-    private static void handleNewGame() {
+    public static void handleNewGame() {
         ENGINE.gameOver();
         ENGINE.newGame();
     }
 
-    private static void handlePosition(String command) {
+    public static void handlePosition(String command) {
         String fen;
         if (command.contains("startpos")) {
             fen = FEN.STARTING_POSITION;
@@ -113,7 +111,7 @@ public class Application {
 
     }
 
-    private static void handleGo(String command) {
+    public static void handleGo(String command) {
 
         boolean ponder = command.contains("ponder");
         ENGINE.setPondering(ponder);
@@ -130,19 +128,19 @@ public class Application {
             int incrementBlackMs = getLabelInt(command, "binc", GO_LABELS);
             thinkTime = ENGINE.chooseThinkTime(timeWhiteMs, timeBlackMs, incrementWhiteMs, incrementBlackMs);
         }
-        ENGINE.think(thinkTime, Application::writeMove);
+        ENGINE.think(thinkTime, Core::writeMove);
     }
 
-    private static void handlePonderHit() {
+    public static void handlePonderHit() {
         ENGINE.setPondering(false);
     }
 
-    private static void handleStop() {
+    public static void handleStop() {
         ENGINE.setPondering(false);
         ENGINE.setSearchCancelled(true);
     }
 
-    private static void handleQuit() {
+    public static void handleQuit() {
         ENGINE.gameOver();
         System.exit(0);
     }
@@ -248,7 +246,7 @@ public class Application {
         return "";
     }
 
-    private static void write(String output) {
+    public static void write(String output) {
         System.out.println(output);
     }
 
