@@ -5,22 +5,30 @@ import com.utsab.chess_engine.core.chess.board.Board;
 import com.utsab.chess_engine.core.chess.board.Move;
 import com.utsab.chess_engine.core.chess.board.Piece;
 import com.utsab.chess_engine.core.chess.generation.MoveGenerator;
+import com.utsab.chess_engine.core.chess.utils.BoardUtils;
 
 /**
- * SEE, or 'Static Exchange Evaluation' function, calculates the change in material balance after a series of exchanges
- * on a single square. Very similar to the human player's heuristic of 'counting the attackers and defenders', it returns
- * an int value signifying the material loss or gain if all possible attackers and defenders of that square are traded
- * away.
- * Used in the quiescence search to prune capture nodes which are obviously detrimental to the side to move (like
- * exchanging your queen for a pawn). This improves search speed at the cost of potentially missing some tactical complications
- * elsewhere on the board.
+ * Performs Static Exchange Evaluation (SEE) to estimate material changes after a series of captures on a single square.
+ * Used in quiescence search to prune detrimental captures, optimizing search speed in a UCI-compatible chess engine.
  *
- * @see <a href="https://www.chessprogramming.org/Static_Exchange_Evaluation">Chess Programming Wiki</a>
+ * @author Utsab Dahal
+ * @version 1.0
+ * @since 2025
+ * @see <a href="https://www.chessprogramming.org/Static_Exchange_Evaluation">Chess Programming Wiki - Static Exchange Evaluation</a>
  */
 public class StaticExchangeEvaluator {
 
     private final MoveGenerator moveGenerator = new MoveGenerator();
 
+    /**
+     * Evaluates the material change after a capture sequence initiated by a move.
+     *
+     * @param board the current board position
+     * @param move  the capture move to evaluate
+     * @return the net material change (positive for gain, negative for loss)
+     * @throws NullPointerException if board or move is null
+     * @throws IllegalArgumentException if move's end square is invalid
+     */
     public int evaluate(Board board, Move move) {
 
         int score = 0;
@@ -42,8 +50,13 @@ public class StaticExchangeEvaluator {
     }
 
     /**
-     * The same SEE evaluation, but with the first move already made on the board. Used during search to evaluate whether
-     * a check should be extended
+     * Evaluates the material change after a capture sequence, assuming the initial move has been made.
+     *
+     * @param board the current board position (post-move)
+     * @param move  the capture move already made
+     * @return the net material change (positive for gain, negative for loss)
+     * @throws NullPointerException if board or move is null
+     * @throws IllegalArgumentException if move's end square is invalid
      */
     public int evaluateAfterMove(Board board, Move move) {
 
@@ -64,60 +77,43 @@ public class StaticExchangeEvaluator {
     }
 
 
+    /**
+     * Finds the least valuable piece attacking a square for the side to move.
+     *
+     * @param board the current board position
+     * @param square the target square
+     * @return the move of the least valuable attacker, or null if none
+     * @throws IllegalArgumentException if square is invalid
+     */
     private Move getLeastValuableAttacker(Board board, int square) {
+        if (!BoardUtils.isValidIndex(square)) {
+            throw new IllegalArgumentException("Invalid square index: " + square);
+        }
 
         boolean isWhite = board.isWhiteToMove();
+        for (Piece piece : new Piece[]{Piece.PAWN, Piece.KNIGHT, Piece.BISHOP, Piece.ROOK, Piece.QUEEN, Piece.KING}) {
+            long pieces = switch (piece) {
+                case PAWN -> board.getPawns(isWhite);
+                case KNIGHT -> board.getKnights(isWhite);
+                case BISHOP -> board.getBishops(isWhite);
+                case ROOK -> board.getRooks(isWhite);
+                case QUEEN -> board.getQueens(isWhite);
+                case KING -> board.getKing(isWhite);
+            };
+            if (pieces == 0) continue;
 
-        long pawns = board.getPawns(isWhite);
-        if (pawns > 0) {
-            long pawnAttackMask = moveGenerator.getPawnAttacks(board, square, !isWhite);
-            if ((pawnAttackMask & pawns) != 0) {
-                int pawnStartSquare = Bitwise.getNextBit(pawnAttackMask & pawns);
-                return new Move(pawnStartSquare, square);
+            long attackMask = switch (piece) {
+                case PAWN -> moveGenerator.getPawnAttacks(board, square, !isWhite);
+                case KNIGHT -> moveGenerator.getKnightAttacks(board, square, !isWhite);
+                case BISHOP -> moveGenerator.getBishopAttacks(board, square, !isWhite);
+                case ROOK -> moveGenerator.getRookAttacks(board, square, !isWhite);
+                case QUEEN -> moveGenerator.getQueenAttacks(board, square, !isWhite);
+                case KING -> moveGenerator.getKingAttacks(board, square, !isWhite);
+            };
+            if ((attackMask & pieces) != 0) {
+                int startSquare = Bitwise.getNextBit(attackMask & pieces);
+                return new Move(startSquare, square);
             }
-        }
-
-        long knights = board.getKnights(isWhite);
-        if (knights > 0) {
-            long knightAttackMask = moveGenerator.getKnightAttacks(board, square, !isWhite);
-            if ((knightAttackMask & knights) != 0) {
-                int knightStartSquare = Bitwise.getNextBit(knightAttackMask & knights);
-                return new Move(knightStartSquare, square);
-            }
-        }
-
-        long bishops = board.getBishops(isWhite);
-        if (bishops > 0) {
-            long bishopAttackMask = moveGenerator.getBishopAttacks(board, square, !isWhite);
-            if ((bishopAttackMask & bishops) != 0) {
-                int bishopStartSquare = Bitwise.getNextBit(bishopAttackMask & bishops);
-                return new Move(bishopStartSquare, square);
-            }
-        }
-
-        long rooks = board.getRooks(isWhite);
-        if (rooks > 0) {
-            long rookAttackMask = moveGenerator.getRookAttacks(board, square, !isWhite);
-            if ((rookAttackMask & rooks) != 0) {
-                int rookStartSquare = Bitwise.getNextBit(rookAttackMask & rooks);
-                return new Move(rookStartSquare, square);
-            }
-        }
-
-        long queens = board.getQueens(isWhite);
-        if (queens > 0) {
-            long queenAttackMask = moveGenerator.getQueenAttacks(board, square, !isWhite);
-            if ((queenAttackMask & queens) != 0) {
-                int queenStartSquare = Bitwise.getNextBit(queenAttackMask & queens);
-                return new Move(queenStartSquare, square);
-            }
-        }
-
-        long king = board.getKing(isWhite);
-        long kingAttackMask = moveGenerator.getKingAttacks(board, square, !isWhite);
-        if ((kingAttackMask & king) != 0) {
-            int kingStartSquare = Bitwise.getNextBit(kingAttackMask & king);
-            return new Move(kingStartSquare, square);
         }
         return null;
     }

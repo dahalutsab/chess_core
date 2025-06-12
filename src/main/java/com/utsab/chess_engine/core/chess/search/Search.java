@@ -6,46 +6,67 @@ import com.utsab.chess_engine.core.chess.transposition.TranspositionTable;
 import java.time.Duration;
 
 /**
- * Search for the best move/evaluation (encapsulated in a {@link SearchResult}) within a give time limit.
- * See {@link Searcher} for a concrete implementation, using an iterative deepening approach.
+ * Defines the contract for chess engine search algorithms in a UCI-compatible context. Implementations find the best
+ * move and evaluation within a given time limit, leveraging transposition tables and multi-threading.
+ *
+ * @author Utsab Dahal
+ * @version 1.0
+ * @since 2025
  */
 public interface Search {
 
     /**
-     * Set the position of the {@link Board}.
+     * Sets the board position for the search.
+     *
+     * @param board the board position
+     * @throws NullPointerException if board is null
+     * @author Utsab Dahal
      */
     void setPosition(Board board);
 
     /**
-     * Set the size of the {@link TranspositionTable}.
+     * Sets the size of the transposition table.
+     *
+     * @param hashSizeMb the size in megabytes
+     * @throws IllegalArgumentException if hashSizeMb is negative
+     * @author Utsab Dahal
      */
     void setHashSize(int hashSizeMb);
 
     /**
-     * Set the number of threads to use while searching.
+     * Sets the number of threads for parallel search.
+     *
+     * @param threadCount the number of threads
+     * @throws IllegalArgumentException if threadCount is non-positive
+     * @author Utsab Dahal
      */
     void setThreadCount(int threadCount);
 
     /**
-     * Search the current position for the best move.
-     * @param duration How long to search for
-     * @return a {@link SearchResult} containing the best move and the current eval.
+     * Searches for the best move within the specified time limit.
+     *
+     * @param duration the search duration
+     * @return the search result containing the best move and evaluation
+     * @throws NullPointerException if duration is null
      */
     SearchResult search(Duration duration);
 
     /**
-     * @return the {@link TranspositionTable} used by the search algorithm.
+     * Retrieves the transposition table used by the search.
+     *
+     * @return the transposition table
      */
     TranspositionTable getTranspositionTable();
 
     /**
-     * Clear any cached search information (transposition table, history/killer tables etc.)
+     * Clears cached search data, including transposition and move ordering tables.
      */
     void clearHistory();
 
     /**
-     * Print the current search statistics.
+     * Logs current search statistics.
      */
-    void logStatistics();
-
+    default void logStatistics() {
+        // No-op by default; implementations may override
+    }
 }

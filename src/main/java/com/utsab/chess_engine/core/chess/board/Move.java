@@ -6,66 +6,104 @@ import lombok.Getter;
 import java.util.Optional;
 
 /**
- * Represents a single chess move.
- * All the information required to represent a move is encoded in a 16-bit integer value field.
+ * Represents a chess move, encoded as a 16-bit integer containing start square, end square, and special move flags.
+ * Supports standard moves, promotions, castling, en passant, and pawn double moves, compatible with UCI protocols.
  * <p>
- * The encoding of the move information in the value field is as follows:
+ * The encoding structure is:
  * <ul>
- *     <li>Bits 0 - 5: Start square (0 - 63)</li>
- *     <li>Bits 6 - 11: End square (0 - 63)</li>
- *     <li>Bits 12 - 15: Special move flags (promotion, castling, pawn double moves, en passant)</li>
+ *     <li>Bits 0-5: Start square (0-63)</li>
+ *     <li>Bits 6-11: End square (0-63)</li>
+ *     <li>Bits 12-15: Special move flags (e.g., promotion, castling)</li>
  * </ul>
- * For more information on move encoding, see <a href="https://www.chessprogramming.org/Encoding_Moves">Chess Programming Wiki</a>.
- * <p>
- * Largely inspired by Sebastian Lague's Chess Coding Adventure:
+ *
+ * * @version 1.0
+ * @since 2025
+ * @author Utsab Dahal
+ * @see <a href="https://www.chessprogramming.org/Encoding_Moves">Chess Programming Wiki - Encoding Moves</a>
  * @see <a href="https://github.com/SebLague/Chess-Coding-Adventure">Chess Coding Adventure</a>
  */
 @Getter
 @EqualsAndHashCode
 public class Move {
 
-    // Special move flags
+    /**
+     * Special move flag indicating no special conditions.
+     */
     public static final short NO_FLAG = 0b0000;
-    public static final short EN_PASSANT_FLAG = 0b0001;
-    public static final short CASTLE_FLAG = 0b0010;
-    public static final short PAWN_DOUBLE_MOVE_FLAG = 0b0011;
-    public static final short PROMOTE_TO_QUEEN_FLAG = 0b0100;
-    public static final short PROMOTE_TO_KNIGHT_FLAG = 0b0101;
-    public static final short PROMOTE_TO_ROOK_FLAG = 0b0110;
-    public static final short PROMOTE_TO_BISHOP_FLAG = 0b0111;
-
-    // Masks for extracting start and end squares from the value field
-    public static final int START_SQUARE_MASK = 0b0000000000111111;
-    public static final int END_SQUARE_MASK = 0b0000111111000000;
-
-    private final int value; // 16-bit integer value representing the move
 
     /**
-     * Constructs a Move instance with the given encoded value.
-     *
-     * @param value The encoded value representing the move.
+     * Special move flag for en passant captures.
      */
+    public static final short EN_PASSANT_FLAG = 0b0001;
+
+    /**
+     * Special move flag for castling moves.
+     */
+    public static final short CASTLE_FLAG = 0b0010;
+
+    /**
+     * Special move flag for pawn double moves.
+     */
+    public static final short PAWN_DOUBLE_MOVE_FLAG = 0b0011;
+
+    /**
+     * Special move flag for pawn promotion to queen.
+     */
+    public static final short PROMOTE_TO_QUEEN_FLAG = 0b0100;
+
+    /**
+     * Special move flag for pawn promotion to knight.
+     */
+    public static final short PROMOTE_TO_KNIGHT_FLAG = 0b0101;
+
+    /**
+     * Special move flag for pawn promotion to rook.
+     */
+    public static final short PROMOTE_TO_ROOK_FLAG = 0b0110;
+
+    /**
+     * Special move flag for pawn promotion to bishop.
+     */
+    public static final short PROMOTE_TO_BISHOP_FLAG = 0b0111;
+
+    /**
+     * Mask for extracting the start square from the move value.
+     */
+    public static final int START_SQUARE_MASK = 0b0000000000111111;
+
+    /**
+     * Mask for extracting the end square from the move value.
+     */
+    public static final int END_SQUARE_MASK = 0b0000111111000000;
+
+    private final int value; // 16-bit integer encoding the move
+
+    /**
+     * Constructs a move with the specified encoded value.
+     *
+     * @param value the 16-bit encoded move value
+     *     */
     public Move(int value) {
         this.value = value;
     }
 
     /**
-     * Constructs a Move instance from the given start square and end square.
+     * Constructs a move from start and end squares, with no special flags.
      *
-     * @param startSquare The starting square of the move (0 - 63).
-     * @param endSquare   The ending square of the move (0 - 63).
-     */
+     * @param startSquare the starting square (0-63)
+     * @param endSquare the ending square (0-63)
+     *     */
     public Move(int startSquare, int endSquare) {
         this.value = (startSquare | endSquare << 6);
     }
 
     /**
-     * Constructs a Move instance from the given start square, end square, and move flag.
+     * Constructs a move with start square, end square, and special move flag.
      *
-     * @param startSquare The starting square of the move (0 - 63).
-     * @param endSquare   The ending square of the move (0 - 63).
-     * @param flag        The special move flag representing additional move information.
-     */
+     * @param startSquare the starting square (0-63)
+     * @param endSquare the ending square (0-63)
+     * @param flag the special move flag (e.g., {@link #PROMOTE_TO_QUEEN_FLAG})
+     *     */
     public Move(int startSquare, int endSquare, int flag) {
         this.value = startSquare | (endSquare << 6) | (flag << 12);
     }
@@ -73,8 +111,8 @@ public class Move {
     /**
      * Retrieves the starting square of the move.
      *
-     * @return The starting square of the move (0 - 63).
-     */
+     * @return the start square index (0-63)
+     *     */
     public int getStartSquare() {
         return value & START_SQUARE_MASK;
     }
@@ -82,17 +120,17 @@ public class Move {
     /**
      * Retrieves the ending square of the move.
      *
-     * @return The ending square of the move (0 - 63).
-     */
+     * @return the end square index (0-63)
+     *     */
     public int getEndSquare() {
         return (value & END_SQUARE_MASK) >>> 6;
     }
 
     /**
-     * Retrieves the piece type to which a pawn is promoted in this move, if applicable.
+     * Retrieves the piece type for pawn promotion, if applicable.
      *
-     * @return The piece type to which a pawn is promoted, or null if no promotion occurs.
-     */
+     * @return the promotion piece type, or null if not a promotion
+     *     */
     public Piece getPromotionPieceType() {
         return switch (value >>> 12) {
             case PROMOTE_TO_QUEEN_FLAG -> Piece.QUEEN;
@@ -104,11 +142,11 @@ public class Move {
     }
 
     /**
-     * Retrieves the special move flag representing additional move information.
+     * Retrieves the special move flag for a promotion to the specified piece type.
      *
-     * @param pieceType The type of piece to which a pawn is promoted.
-     * @return The special move flag indicating pawn promotion.
-     */
+     * @param pieceType the piece type to promote to, or null for no promotion
+     * @return the corresponding promotion flag, or {@link #NO_FLAG} if not applicable
+     *     */
     public static short getPromotionFlag(Piece pieceType) {
         if (pieceType == null) {
             return NO_FLAG;
@@ -123,47 +161,47 @@ public class Move {
     }
 
     /**
-     * Checks if this move represents a pawn promotion.
+     * Checks if the move is a pawn promotion.
      *
-     * @return True if the move is a pawn promotion, false otherwise.
-     */
+     * @return true if the move is a promotion, false otherwise
+     *     */
     public boolean isPromotion() {
         return (value >>> 12) >= PROMOTE_TO_QUEEN_FLAG;
     }
 
     /**
-     * Checks if this move represents an en passant capture.
+     * Checks if the move is an en passant capture.
      *
-     * @return True if the move is an en passant capture, false otherwise.
-     */
+     * @return true if the move is en passant, false otherwise
+     *     */
     public boolean isEnPassant() {
         return (value >>> 12) == EN_PASSANT_FLAG;
     }
 
     /**
-     * Checks if this move represents castling.
+     * Checks if the move is a castling move.
      *
-     * @return True if the move is a castling move, false otherwise.
-     */
+     * @return true if the move is castling, false otherwise
+     *     */
     public boolean isCastling() {
         return (value >>> 12) == CASTLE_FLAG;
     }
 
     /**
-     * Checks if this move represents a pawn double move.
+     * Checks if the move is a pawn double move.
      *
-     * @return True if the move is a pawn double move, false otherwise.
-     */
+     * @return true if the move is a pawn double move, false otherwise
+     *     */
     public boolean isPawnDoubleMove() {
         return (value >>> 12) == PAWN_DOUBLE_MOVE_FLAG;
     }
 
     /**
-     * Checks if this move matches another move.
+     * Checks if this move matches another move, considering start/end squares and promotion type.
      *
-     * @param move The move to compare against.
-     * @return True if the moves match, false otherwise.
-     */
+     * @param move the move to compare against
+     * @return true if the moves match, false otherwise
+     *     */
     public boolean matches(Move move) {
         if (move == null) return false;
         boolean squareMatch = getStartSquare() == move.getStartSquare() && getEndSquare() == move.getEndSquare();

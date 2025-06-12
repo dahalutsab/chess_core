@@ -12,31 +12,48 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
- * A utility class for parsing and generating Forsyth-Edwards Notation (FEN), a standard notation
- * to represent chess positions. FEN encodes the board state, active color, castling availability,
- * en passant target, halfmove clock, and fullmove number.
+ * A utility class for parsing Forsyth-Edwards Notation (FEN), a standard notation for representing
+ * chess positions. FEN encodes the board state, active color, castling availability, en passant target,
+ * halfmove clock, and fullmove number. This class provides methods to convert a FEN string into a
+ * {@link Board} object, maintaining compatibility with UCI chess engine requirements.
  *
  * @author Utsab Dahal
  * @version 1.0
- * @since 2025-06-07
+ * @since 2025
  * @see <a href="https://www.chessprogramming.org/Forsyth-Edwards_Notation">Chess Programming Wiki - FEN</a>
  */
 public class FEN {
 
+    /**
+     * The FEN string representing the standard starting position of a chess game.
+     */
     public static final String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
     /**
-     * Converts a FEN string into a ChessBoard object.
+     * Converts a FEN string into a {@link Board} object, initializing all board state components
+     * including piece bitboards, side to move, castling rights, en passant target, and move counters.
+     *
+     * <p>The method parses the FEN string, which consists of six fields separated by spaces:
+     * <ul>
+     *     <li>Piece placement (ranks 8 to 1, files a to h)</li>
+     *     <li>Side to move ("w" or "b")</li>
+     *     <li>Castling availability (e.g., "KQkq" or "-")</li>
+     *     <li>En passant target square (e.g., "e3" or "-")</li>
+     *     <li>Halfmove clock (number of halfmoves since last capture or pawn move)</li>
+     *     <li>Fullmove number (incremented after Black's move)</li>
+     * </ul>
      *
      * @param fen the FEN string to parse (e.g., "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-     * @return a new ChessBoard instance representing the parsed position
+     * @return a new {@link Board} instance representing the parsed position
      * @throws IllegalArgumentException if the FEN string is malformed or invalid
      */
     public static Board toBoard(String fen) {
         try {
+            // Split FEN string into its components
             String[] parts = fen.split(" ");
             String[] files = parts[0].split("/");
 
+            // Initialize bitboards for all piece types
             long whitePawns = 0L;
             long whiteKnights = 0L;
             long whiteBishops = 0L;
@@ -50,6 +67,7 @@ public class FEN {
             long blackQueens = 0L;
             long blackKing = 0L;
 
+            // Parse piece placement into a list of ranks, reversing to match board orientation
             List<List<String>> rankFileHash = Arrays.stream(files)
                     .map(file -> Arrays.stream(file.split(""))
                             .flatMap(FEN::parseSquare)
@@ -57,6 +75,7 @@ public class FEN {
                     .collect(Collectors.toList());
             Collections.reverse(rankFileHash);
 
+            // Process each rank and file to set piece bitboards
             for (int rankIndex = 0; rankIndex < rankFileHash.size(); rankIndex++) {
                 List<String> rank = rankFileHash.get(rankIndex);
                 for (int fileIndex = 0; fileIndex < rank.size(); fileIndex++) {
@@ -80,11 +99,13 @@ public class FEN {
                 }
             }
 
+            // Parse additional FEN fields
             boolean isWhiteToMove = parseSideToMove(parts[1]);
             int castlingRights = parseCastlingRights(parts[2]);
             int enPassantFile = parseEnPassantFile(parts[3]);
             int fiftyMoveCounter = parts.length > 4 ? parseFiftyMoveCounter(parts[4]) : 0;
 
+            // Initialize and configure the Board object
             Board board = new Board();
             board.setWhitePawns(whitePawns);
             board.setWhiteKnights(whiteKnights);
@@ -110,60 +131,38 @@ public class FEN {
             return board;
 
         } catch (Exception e) {
-            throw new IllegalArgumentException(fen, e);
+            throw new IllegalArgumentException("Invalid FEN string: " + fen, e);
         }
     }
 
     /**
-     * Converts a ChessBoard object into a FEN string.
-     * Note: This method is currently a placeholder and requires full implementation.
+     * Parses the side-to-move field from the FEN string.
      *
-     * @param board the chess board to convert
-     * @return the FEN string representation (currently returns null)
-     * @throws IllegalArgumentException if the board state is invalid
-     */
-    public static String toFEN(Board board) {
-        try {
-            String isWhiteToMove = toSideToMove(board.isWhiteToMove());
-            String castlingRights = toCastlingRights(board.getGameState().getCastlingRights());
-            String enPassantFile = toEnPassantFile(board.getGameState().getEnPassantFile());
-            String fiftyMoveCounter = toFiftyMoveCounter(board.getGameState().getFiftyMoveCounter());
-            return null; // TODO: Implement full FEN generation
-        } catch (Exception e) {
-            throw new IllegalArgumentException(board.toString(), e);
-        }
-    }
-
-    /**
-     * Parses the side to move from the FEN string.
-     *
-     * @param sideToMove the FEN side to move indicator ("w" or "b")
-     * @return true for white, false for black
-     * @throws IllegalArgumentException if the indicator is invalid
+     * @param sideToMove the side-to-move indicator ("w" or "b")
+     * @return {@code true} if White is to move, {@code false} if Black
+     * @throws IllegalArgumentException if the side-to-move indicator is invalid
      */
     private static boolean parseSideToMove(String sideToMove) {
         return switch (sideToMove) {
             case "w" -> true;
             case "b" -> false;
-            default -> throw new IllegalArgumentException("Invalid side to move! " + sideToMove);
+            default -> throw new IllegalArgumentException("Invalid side to move: " + sideToMove);
         };
     }
 
     /**
-     * Converts the side to move to a FEN string representation.
+     * Parses the castling availability field from the FEN string into a bitmask.
      *
-     * @param sideToMove true for white, false for black
-     * @return "w" for white, "b" for black
-     */
-    private static String toSideToMove(boolean sideToMove) {
-        return sideToMove ? "w" : "b";
-    }
-
-    /**
-     * Parses castling rights from the FEN string.
+     * <p>The bitmask uses the following structure:
+     * <ul>
+     *     <li>Bit 0: White kingside castling (K)</li>
+     *     <li>Bit 1: White queenside castling (Q)</li>
+     *     <li>Bit 2: Black kingside castling (k)</li>
+     *     <li>Bit 3: Black queenside castling (q)</li>
+     * </ul>
      *
-     * @param castlingRights the FEN castling rights string (e.g., "KQkq" or "-")
-     * @return a bitmask representing castling rights
+     * @param castlingRights the castling availability string (e.g., "KQkq" or "-")
+     * @return an integer bitmask representing castling rights
      */
     private static int parseCastlingRights(String castlingRights) {
         int castlingRightsMask = 0b0000;
@@ -183,36 +182,10 @@ public class FEN {
     }
 
     /**
-     * Converts castling rights bitmask to a FEN string representation.
+     * Parses the en passant target square from the FEN string.
      *
-     * @param castlingRights the bitmask of castling rights
-     * @return the FEN castling rights string (e.g., "KQkq" or "-")
-     */
-    private static String toCastlingRights(int castlingRights) {
-        if (castlingRights == 0b0000) {
-            return "-";
-        }
-        String castlingRightsString = "-";
-        if ((castlingRights & 0b0001) != 0) {
-            castlingRightsString += "K";
-        }
-        if ((castlingRights & 0b0010) != 0) {
-            castlingRightsString += "Q";
-        }
-        if ((castlingRights & 0b0100) != 0) {
-            castlingRightsString += "k";
-        }
-        if ((castlingRights & 0b1000) != 0) {
-            castlingRightsString += "q";
-        }
-        return castlingRightsString;
-    }
-
-    /**
-     * Parses the en passant file from the FEN string.
-     *
-     * @param enPassantFile the FEN en passant target square (e.g., "e3" or "-")
-     * @return the file index (-1 if no en passant)
+     * @param enPassantFile the en passant target square (e.g., "e3" or "-")
+     * @return the file index (0-7) of the en passant target, or -1 if none
      */
     private static int parseEnPassantFile(String enPassantFile) {
         if (enPassantFile.equals("-")) {
@@ -223,40 +196,21 @@ public class FEN {
     }
 
     /**
-     * Converts the en passant file index to a FEN string representation.
+     * Parses the halfmove clock (fifty-move counter) from the FEN string.
      *
-     * @param enPassantFile the file index (-1 for no en passant)
-     * @return the FEN en passant target square (e.g., "e3" or "-")
-     */
-    private static String toEnPassantFile(int enPassantFile) {
-        if (enPassantFile == -1) {
-            return "-";
-        }
-        return Integer.valueOf(Notation.toNotation(enPassantFile)).toString();
-    }
-
-    /**
-     * Parses the fifty-move counter from the FEN string.
-     *
-     * @param fiftyMoveCounter the FEN fifty-move counter string
-     * @return the integer value of the counter
+     * @param fiftyMoveCounter the halfmove clock string
+     * @return the integer value of the halfmove clock
+     * @throws NumberFormatException if the counter is not a valid integer
      */
     private static int parseFiftyMoveCounter(String fiftyMoveCounter) {
         return Character.isDigit(fiftyMoveCounter.charAt(0)) ? Integer.parseInt(fiftyMoveCounter) : 0;
     }
 
     /**
-     * Converts the fifty-move counter to a FEN string representation.
+     * Parses a single square character from the piece placement field into a stream of piece or empty square indicators.
      *
-     * @param fiftyMoveCounter the counter value
-     * @return the string representation of the counter
-     */
-    private static String toFiftyMoveCounter(int fiftyMoveCounter) {
-        return Integer.toString(fiftyMoveCounter);
-    }
-
-    /**
-     * Parses a single square character into a stream of piece or empty square indicators.
+     * <p>Letters (e.g., "P", "r") represent pieces, while digits (1-8) indicate consecutive empty squares.
+     * Empty squares are represented as "x" in the output stream.
      *
      * @param square the character to parse (e.g., "P" or "2")
      * @return a stream of piece codes or "x" for empty squares
@@ -264,9 +218,13 @@ public class FEN {
      */
     private static Stream<String> parseSquare(String square) {
         if (square.length() != 1) {
-            throw new IllegalArgumentException("Illegal square char! " + square);
+            throw new IllegalArgumentException("Invalid square character: " + square);
         }
-        boolean isLetter = Character.isLetter(square.charAt(0));
-        return isLetter ? Stream.of(square) : IntStream.range(0, Integer.parseInt(square)).mapToObj(i -> "x");
+        return switch (square.charAt(0)) {
+            case '1', '2', '3', '4', '5', '6', '7', '8' ->
+                    IntStream.range(0, Integer.parseInt(square)).mapToObj(i -> "x");
+            case 'P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k' -> Stream.of(square);
+            default -> throw new IllegalArgumentException("Invalid square character: " + square);
+        };
     }
 }

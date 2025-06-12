@@ -1,15 +1,5 @@
 package com.utsab.chess_engine.core.chess.utils.notation;
 
-/**
- * A utility class to convert chess moves into Standard Algebraic Notation (SAN).
- * SAN is a widely used notation to represent chess moves in a human-readable format (e.g., "Nf3", "Qxe5+").
- * This implementation ensures moves are converted before they are applied to the board to maintain accuracy.
- *
- * @author Utsab Dahal
- * @version 1.0
- * @since 2025-06-07
- * @see <a href="https://www.chessprogramming.org/Algebraic_Chess_Notation">Chess Programming Wiki - Algebraic Notation</a>
- */
 import com.utsab.chess_engine.core.chess.board.Board;
 import com.utsab.chess_engine.core.chess.board.Move;
 import com.utsab.chess_engine.core.chess.board.Piece;
@@ -18,11 +8,36 @@ import com.utsab.chess_engine.core.chess.utils.BoardUtils;
 
 import java.util.List;
 
+/**
+ * A utility class for converting chess moves into Standard Algebraic Notation (SAN), a human-readable
+ * format for representing chess moves (e.g., "Nf3", "Qxe5+"). This implementation ensures accurate
+ * conversion by evaluating moves before they are applied施
+
+ System: Applied to the board, maintaining compatibility with UCI protocols.
+
+ * @author Utsab Dahal
+ * @version 1.0
+ * @since 2025
+ * @see <a href="https://www.chessprogramming.org/Algebraic_Chess_Notation">Chess Programming Wiki - Algebraic Notation</a>
+ */
 public class SAN {
 
     /**
-     * Convert move to Standard Algebraic Notation (SAN).
-     * Note: the move must not yet have been made on the board to ensure accurate state evaluation.
+     * Converts a chess move to its Standard Algebraic Notation (SAN) representation.
+     *
+     * <p>The method evaluates the move in the context of the current board state to ensure accurate
+     * notation, including handling castling, captures, promotions, checks, and checkmates. The move
+     * must not yet have been applied to the board to maintain state consistency.
+     *
+     * <p>SAN notation includes:
+     * <ul>
+     *     <li>Piece type (e.g., "N" for knight, omitted for pawns)</li>
+     *     <li>File or rank for disambiguation if multiple pieces can move to the same square</li>
+     *     <li>"x" for captures</li>
+     *     <li>"=" followed by piece type for promotions (e.g., "=Q")</li>
+     *     <li>"+" for check, "#" for checkmate</li>
+     *     <li>"O-O" or "O-O-O" for castling</li>
+     * </ul>
      *
      * @param move the chess move to convert
      * @param board the current state of the chessboard
@@ -30,21 +45,24 @@ public class SAN {
      * @throws IllegalArgumentException if the move or board state is invalid
      */
     public static String toSan(Move move, Board board) {
+        // Retrieve piece types for the move
         Piece pieceType = board.pieceAt(move.getStartSquare());
         Piece capturedPieceType = board.pieceAt(move.getEndSquare());
 
+        // Handle castling moves
         if (move.isCastling()) {
             int delta = move.getEndSquare() - move.getStartSquare();
             return delta == 2 ? "O-O" : "O-O-O";
         }
 
+        // Initialize notation with piece type (if not pawn)
         MoveGenerator moveGenerator = new MoveGenerator();
         String notation = "";
         if (pieceType != Piece.PAWN) {
             notation += Notation.PIECE_NOTATION_MAP.get(pieceType).toUpperCase();
         }
 
-        // Check for ambiguity in notation (e.g., multiple pieces moving to the same square)
+        // Check for ambiguity in piece moves
         if (pieceType != Piece.PAWN && pieceType != Piece.KING) {
             List<Move> legalMoves = moveGenerator.generateMoves(board);
 
@@ -68,28 +86,27 @@ public class SAN {
             }
         }
 
+        // Handle captures and en passant
         if (capturedPieceType != null) {
-            // Add 'x' to indicate capture
             if (pieceType == Piece.PAWN) {
                 notation += Notation.getFile(move.getStartSquare());
             }
             notation += "x";
-        } else {
-            // Check if capturing en passant
-            if (move.isEnPassant()) {
-                notation += Notation.getFile(move.getStartSquare()) + "x";
-            }
+        } else if (move.isEnPassant()) {
+            notation += Notation.getFile(move.getStartSquare()) + "x";
         }
 
+        // Append destination square
         notation += Notation.getFile(move.getEndSquare());
         notation += Notation.getRank(move.getEndSquare());
 
-        // Add promotion piece type if applicable
+        // Handle promotions
         if (move.isPromotion()) {
             Piece promotionPieceType = move.getPromotionPieceType();
             notation += "=" + Notation.PIECE_NOTATION_MAP.get(promotionPieceType).toUpperCase();
         }
 
+        // Check for check or checkmate
         board.makeMove(move);
         if (moveGenerator.isCheck(board, board.isWhiteToMove())) {
             List<Move> legalMoves = moveGenerator.generateMoves(board);

@@ -1,28 +1,41 @@
 package com.utsab.chess_engine.core.chess.transposition;
 
+/**
+ * Enumerates flags used in transposition table entries to indicate the type of evaluation score stored.
+ * These flags help determine whether a score is exact, a lower bound, or an upper bound, guiding the search
+ * algorithm in a UCI-compatible chess engine.
+ *
+ * @author Utsab Dahal
+ * @version 1.0
+ * @since 2025
+ * @see <a href="https://www.chessprogramming.org/Transposition_Table">Chess Programming Wiki - Transposition Table</a>
+ */
 public enum HashFlag {
 
     /**
-     * The value for this node is the exact evaluation as determined by the evaluation function.
+     * Indicates that the stored score is the exact evaluation of the position, as determined by the evaluation function.
      */
     EXACT,
 
     /**
-     * This node resulted in a beta-cutoff for the opponent, meaning they discarded the move that resulted in this position
-     * because they evaluated it as being worse than other options they had already considered. So, we know there is probably
-     * a 'good' move in this position. However, the opponent's search cut off as soon as they found one move matching this
-     * criterion, so there may be better moves. The evaluation is therefore the 'lower bound' of the true evaluation.
+     * Indicates that the stored score is a lower bound. The position resulted in a beta-cutoff for the opponent,
+     * meaning they discarded the move leading to this position because it was worse than other options. The score
+     * represents the minimum evaluation possible, but better moves may exist.
      */
     LOWER,
 
     /**
-     * This node was evaluated by the player as being inferior to alternatives they already considered - i.e. it did not
-     * improve their alpha score. Basically, everything sucks here. There is no good move for me in the position, *and*
-     * I have already discovered an alternative move I can use to avoid reaching this position at all. The node value is
-     * an upper bound because it is the maximum score you can hope to achieve from all the moves this position.
+     * Indicates that the stored score is an upper bound. The position was evaluated as inferior to other alternatives,
+     * meaning no move improves the player's alpha score. The score is the maximum achievable evaluation from this position.
      */
     UPPER;
 
+    /**
+     * Converts a HashFlag to its integer representation for storage in a transposition table entry.
+     *
+     * @param flag the HashFlag to convert
+     * @return the integer value (0 for EXACT, 1 for LOWER, 2 for UPPER)
+     */
     public static int value(HashFlag flag) {
         return switch (flag) {
             case EXACT -> 0;
@@ -31,6 +44,13 @@ public enum HashFlag {
         };
     }
 
+    /**
+     * Converts an integer value to the corresponding HashFlag.
+     *
+     * @param value the integer value (0-2)
+     * @return the corresponding HashFlag
+     * @throws IllegalArgumentException if the value is not 0, 1, or 2
+     */
     public static HashFlag valueOf(int value) {
         return switch (value) {
             case 0 -> EXACT;
@@ -39,5 +59,4 @@ public enum HashFlag {
             default -> throw new IllegalArgumentException("Illegal node type " + value);
         };
     }
-
 }

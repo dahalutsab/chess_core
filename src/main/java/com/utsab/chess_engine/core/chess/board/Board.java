@@ -9,29 +9,32 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 
 /**
- * Represents the current state of the chess board, including the positions of the pieces, the side to move, en passant
- * rights, fifty-move counter, and the move counter. Includes functions to 'make' and 'unmake' moves on the board, which
- * are fundamental to both the search and evaluation algorithms. Uses bitboards to represent the pieces and 'toggling'
- * functions to set and unset pieces.
+ * Represents the current state of a chessboard, including piece positions, side to move, en passant rights,
+ * castling rights, fifty-move counter, and move history. Uses bitboards for efficient piece representation
+ * and provides methods to make and unmake moves, essential for search and evaluation in a UCI-compatible
+ * chess engine.
  *
- * @see <a href="https://www.chessprogramming.org/Board_Representation">Chess Programming Wiki</a>
+ * @version 1.0
+ * @since 2025
+ * @author Utsab Dahal
+ * @see <a href="https://www.chessprogramming.org/Board_Representation">Chess Programming Wiki - Board Representation</a>
  */
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Board {
 
-    long whitePawns =   Bits.WHITE_PAWNS_START;
+    long whitePawns = Bits.WHITE_PAWNS_START;
     long whiteKnights = Bits.WHITE_KNIGHTS_START;
     long whiteBishops = Bits.WHITE_BISHOPS_START;
-    long whiteRooks =   Bits.WHITE_ROOKS_START;
-    long whiteQueens =  Bits.WHITE_QUEENS_START;
-    long whiteKing =    Bits.WHITE_KING_START;
-    long blackPawns =   Bits.BLACK_PAWNS_START;
+    long whiteRooks = Bits.WHITE_ROOKS_START;
+    long whiteQueens = Bits.WHITE_QUEENS_START;
+    long whiteKing = Bits.WHITE_KING_START;
+    long blackPawns = Bits.BLACK_PAWNS_START;
     long blackKnights = Bits.BLACK_KNIGHTS_START;
     long blackBishops = Bits.BLACK_BISHOPS_START;
-    long blackRooks =   Bits.BLACK_ROOKS_START;
-    long blackQueens =  Bits.BLACK_QUEENS_START;
-    long blackKing =    Bits.BLACK_KING_START;
+    long blackRooks = Bits.BLACK_ROOKS_START;
+    long blackQueens = Bits.BLACK_QUEENS_START;
+    long blackKing = Bits.BLACK_KING_START;
 
     long whitePieces;
     long blackPieces;
@@ -45,6 +48,10 @@ public class Board {
     Deque<GameState> gameStateHistory = new ArrayDeque<>();
     Deque<Move> moveHistory = new ArrayDeque<>();
 
+    /**
+     * Constructs a new board with the starting position, initializing Zobrist keys and piece bitboards.
+     *
+         */
     public Board() {
         gameState.setZobristKey(Zobrist.generateKey(this));
         gameState.setPawnKey(Zobrist.generatePawnKey(this));
@@ -52,11 +59,13 @@ public class Board {
     }
 
     /**
-     * Updates the internal board representation with the {@link Move} just made. Toggles the piece bitboards to move the
-     * piece + remove the captured piece, plus special rules for pawn double-moves, castling, promotion and en passant.
-     */
+     * Updates the board state by applying the specified move, toggling piece bitboards and updating game state
+     * (e.g., Zobrist keys, castling rights, en passant file). Handles special moves like pawn double moves,
+     * castling, promotions, and en passant captures.
+     *
+     * @param move the move to apply
+         */
     public void makeMove(Move move) {
-
         int startSquare = move.getStartSquare();
         int endSquare = move.getEndSquare();
         Piece piece = pieceList[startSquare];
@@ -78,30 +87,21 @@ public class Board {
             pawnZobrist = Zobrist.updatePiece(pawnZobrist, startSquare, Piece.PAWN, isWhiteToMove);
             pawnZobrist = Zobrist.updatePiece(pawnZobrist, endSquare, Piece.PAWN, isWhiteToMove);
             newEnPassantFile = BoardUtils.getFile(endSquare);
-        }
-        else if (move.isCastling()) {
+        } else if (move.isCastling()) {
             toggleSquares(Piece.KING, isWhiteToMove, startSquare, endSquare);
             pieceList[startSquare] = null;
             pieceList[endSquare] = Piece.KING;
             zobrist = Zobrist.updatePiece(zobrist, startSquare, Piece.KING, isWhiteToMove);
             zobrist = Zobrist.updatePiece(zobrist, endSquare, Piece.KING, isWhiteToMove);
             boolean isKingSide = BoardUtils.getFile(endSquare) == 6;
-            int rookStartSquare;
-            int rookEndSquare;
-            if (isKingSide) {
-                rookStartSquare = isWhiteToMove ? 7 : 63;
-                rookEndSquare = isWhiteToMove ? 5 : 61;
-            } else {
-                rookStartSquare = isWhiteToMove ? 0 : 56;
-                rookEndSquare = isWhiteToMove ? 3 : 59;
-            }
+            int rookStartSquare = isKingSide ? (isWhiteToMove ? 7 : 63) : (isWhiteToMove ? 0 : 56);
+            int rookEndSquare = isKingSide ? (isWhiteToMove ? 5 : 61) : (isWhiteToMove ? 3 : 59);
             toggleSquares(Piece.ROOK, isWhiteToMove, rookStartSquare, rookEndSquare);
             pieceList[rookStartSquare] = null;
             pieceList[rookEndSquare] = Piece.ROOK;
             zobrist = Zobrist.updatePiece(zobrist, rookStartSquare, Piece.ROOK, isWhiteToMove);
             zobrist = Zobrist.updatePiece(zobrist, rookEndSquare, Piece.ROOK, isWhiteToMove);
-        }
-        else if (move.isPromotion()) {
+        } else if (move.isPromotion()) {
             toggleSquare(Piece.PAWN, isWhiteToMove, startSquare);
             toggleSquare(move.getPromotionPieceType(), isWhiteToMove, endSquare);
             pieceList[startSquare] = null;
@@ -116,9 +116,7 @@ public class Board {
                 }
             }
             zobrist = Zobrist.updatePiece(zobrist, endSquare, move.getPromotionPieceType(), isWhiteToMove);
-            pawnZobrist = Zobrist.updatePiece(pawnZobrist, endSquare, move.getPromotionPieceType(), isWhiteToMove);
-        }
-        else if (move.isEnPassant()) {
+        } else if (move.isEnPassant()) {
             toggleSquares(piece, isWhiteToMove, startSquare, endSquare);
             int pawnSquare = isWhiteToMove ? endSquare - 8 : endSquare + 8;
             toggleSquare(Piece.PAWN, !isWhiteToMove, pawnSquare);
@@ -131,8 +129,7 @@ public class Board {
             pawnZobrist = Zobrist.updatePiece(pawnZobrist, startSquare, Piece.PAWN, isWhiteToMove);
             pawnZobrist = Zobrist.updatePiece(pawnZobrist, pawnSquare, Piece.PAWN, !isWhiteToMove);
             pawnZobrist = Zobrist.updatePiece(pawnZobrist, endSquare, Piece.PAWN, isWhiteToMove);
-        }
-        else {
+        } else {
             toggleSquares(piece, isWhiteToMove, startSquare, endSquare);
             if (capturedPiece != null) {
                 toggleSquare(capturedPiece, !isWhiteToMove, endSquare);
@@ -168,11 +165,10 @@ public class Board {
     }
 
     /**
-     * Reverts the internal board representation to the state before the last move. Toggles the piece bitboards to move the
-     * piece + reinstate the captured piece, plus special rules for pawn double-moves, castling, promotion and en passant.
-     */
+     * Reverts the board state to before the last move, restoring piece bitboards and game state.
+     *
+         */
     public void unmakeMove() {
-
         isWhiteToMove = !isWhiteToMove;
         Move lastMove = moveHistory.pop();
         int startSquare = lastMove.getStartSquare();
@@ -182,56 +178,45 @@ public class Board {
         if (lastMove.isCastling()) {
             toggleSquares(Piece.KING, isWhiteToMove, endSquare, startSquare);
             boolean isKingSide = BoardUtils.getFile(endSquare) == 6;
-            int rookStartSquare;
-            int rookEndSquare;
-            if (isKingSide) {
-                rookStartSquare = isWhiteToMove ? 5 : 61;
-                rookEndSquare = isWhiteToMove ? 7 : 63;
-            } else {
-                rookStartSquare = isWhiteToMove ? 3 : 59;
-                rookEndSquare = isWhiteToMove ? 0 : 56;
-            }
+            int rookStartSquare = isKingSide ? (isWhiteToMove ? 5 : 61) : (isWhiteToMove ? 3 : 59);
+            int rookEndSquare = isKingSide ? (isWhiteToMove ? 7 : 63) : (isWhiteToMove ? 0 : 56);
             toggleSquares(Piece.ROOK, isWhiteToMove, rookStartSquare, rookEndSquare);
             pieceList[startSquare] = Piece.KING;
             pieceList[endSquare] = null;
             pieceList[rookEndSquare] = Piece.ROOK;
             pieceList[rookStartSquare] = null;
-        }
-        else if (lastMove.isPromotion()) {
+        } else if (lastMove.isPromotion()) {
             toggleSquare(lastMove.getPromotionPieceType(), isWhiteToMove, endSquare);
             toggleSquare(Piece.PAWN, isWhiteToMove, startSquare);
             if (gameState.getCapturedPiece() != null) {
                 toggleSquare(gameState.getCapturedPiece(), !isWhiteToMove, endSquare);
             }
             pieceList[startSquare] = Piece.PAWN;
-            pieceList[endSquare] = gameState.getCapturedPiece() != null ? gameState.getCapturedPiece() : null;
-        }
-        else if (lastMove.isEnPassant()) {
+            pieceList[endSquare] = gameState.getCapturedPiece();
+        } else if (lastMove.isEnPassant()) {
             toggleSquares(Piece.PAWN, isWhiteToMove, endSquare, startSquare);
             int captureSquare = isWhiteToMove ? endSquare - 8 : endSquare + 8;
             toggleSquare(Piece.PAWN, !isWhiteToMove, captureSquare);
             pieceList[startSquare] = Piece.PAWN;
             pieceList[endSquare] = null;
             pieceList[captureSquare] = Piece.PAWN;
-        }
-        else {
+        } else {
             toggleSquares(piece, isWhiteToMove, endSquare, startSquare);
             if (gameState.getCapturedPiece() != null) {
                 toggleSquare(gameState.getCapturedPiece(), !isWhiteToMove, endSquare);
             }
             pieceList[startSquare] = piece;
-            pieceList[endSquare] = gameState.getCapturedPiece() != null ? gameState.getCapturedPiece() : null;
+            pieceList[endSquare] = gameState.getCapturedPiece();
         }
 
         gameState = gameStateHistory.pop();
         recalculatePieces();
-
     }
 
     /**
-     * Make a 'null' move, meaning the side to move passes their turn and gives the opponent a double-move. Used exclusively
-     * during null-move pruning during search.
-     */
+     * Applies a null move, passing the turn to the opponent without moving pieces, used in null-move pruning.
+     *
+         */
     public void makeNullMove() {
         isWhiteToMove = !isWhiteToMove;
         long newZobristKey = Zobrist.updateKeyAfterNullMove(gameState.getZobristKey(), gameState.getEnPassantFile());
@@ -241,23 +226,46 @@ public class Board {
     }
 
     /**
-     * Unmake the 'null' move used during null-move pruning to try and prove a beta cut-off.
-     */
+     * Reverts a null move, restoring the previous board state.
+     *
+         */
     public void unmakeNullMove() {
         isWhiteToMove = !isWhiteToMove;
         gameState = gameStateHistory.pop();
     }
 
+    /**
+     * Toggles the presence of a piece on two squares (e.g., moving a piece from start to end).
+     *
+     * @param type the piece type
+     * @param isWhite true for White pieces, false for Black
+     * @param startSquare the starting square (0-63)
+     * @param endSquare the ending square (0-63)
+         */
     public void toggleSquares(Piece type, boolean isWhite, int startSquare, int endSquare) {
         long toggleMask = (1L << startSquare | 1L << endSquare);
         toggle(type, isWhite, toggleMask);
     }
 
+    /**
+     * Toggles the presence of a piece on a single square.
+     *
+     * @param type the piece type
+     * @param isWhite true for White pieces, false for Black
+     * @param square the square index (0-63)
+         */
     public void toggleSquare(Piece type, boolean isWhite, int square) {
         long toggleMask = 1L << square;
         toggle(type, isWhite, toggleMask);
     }
 
+    /**
+     * Toggles piece bitboards based on piece type and color.
+     *
+     * @param type the piece type
+     * @param isWhite true for White pieces, false for Black
+     * @param toggleMask the bitboard mask to toggle
+         */
     private void toggle(Piece type, boolean isWhite, long toggleMask) {
         switch (type) {
             case PAWN ->    { if (isWhite) whitePawns ^= toggleMask;    else blackPawns ^= toggleMask; }
@@ -269,25 +277,32 @@ public class Board {
         }
     }
 
+    /**
+     * Recalculates the combined bitboards for White pieces, Black pieces, and occupied squares.
+     *
+         */
     public void recalculatePieces() {
         whitePieces = whitePawns | whiteKnights | whiteBishops | whiteRooks | whiteQueens | whiteKing;
         blackPieces = blackPawns | blackKnights | blackBishops | blackRooks | blackQueens | blackKing;
         occupied = whitePieces | blackPieces;
     }
 
+    /**
+     * Calculates new castling rights after a move, clearing rights if the king or rooks move.
+     *
+     * @param startSquare the starting square of the move
+     * @param endSquare the ending square of the move
+     * @param pieceType the type of piece moved
+     * @return the updated castling rights bitmask
+         */
     private int calculateCastlingRights(int startSquare, int endSquare, Piece pieceType) {
         int newCastlingRights = gameState.getCastlingRights();
         if (newCastlingRights == 0b0000) {
-            // Both sides already lost castling rights, so nothing to calculate.
             return newCastlingRights;
         }
-        // Any move by the king removes castling rights.
         if (Piece.KING.equals(pieceType)) {
             newCastlingRights &= isWhiteToMove ? Bits.CLEAR_WHITE_CASTLING_MASK : Bits.CLEAR_BLACK_CASTLING_MASK;
         }
-        // Any move starting from/ending at a rook square removes castling rights for that corner.
-        // Note: all of these cases need to be checked, to cover the scenario where a rook in starting position captures
-        // another rook in starting position; in that case, both sides lose castling rights!
         if (startSquare == 7 || endSquare == 7) {
             newCastlingRights &= Bits.CLEAR_WHITE_KINGSIDE_MASK;
         }
@@ -303,38 +318,92 @@ public class Board {
         return newCastlingRights;
     }
 
+    /**
+     * Retrieves the piece at a given square.
+     *
+     * @param square the square index (0-63)
+     * @return the piece at the square, or null if empty
+         */
     public Piece pieceAt(int square) {
         return pieceList[square];
     }
 
+    /**
+     * Retrieves the bitboard for pawns of the specified color.
+     *
+     * @param isWhite true for White pawns, false for Black
+     * @return the pawn bitboard
+         */
     public long getPawns(boolean isWhite) {
         return isWhite ? whitePawns : blackPawns;
     }
 
+    /**
+     * Retrieves the bitboard for knights of the specified color.
+     *
+     * @param isWhite true for White knights, false for Black
+     * @return the knight bitboard
+         */
     public long getKnights(boolean isWhite) {
         return isWhite ? whiteKnights : blackKnights;
     }
 
+    /**
+     * Retrieves the bitboard for bishops of the specified color.
+     *
+     * @param isWhite true for White bishops, false for Black
+     * @return the bishop bitboard
+         */
     public long getBishops(boolean isWhite) {
         return isWhite ? whiteBishops : blackBishops;
     }
 
+    /**
+     * Retrieves the bitboard for rooks of the specified color.
+     *
+     * @param isWhite true for White rooks, false for Black
+     * @return the rook bitboard
+         */
     public long getRooks(boolean isWhite) {
         return isWhite ? whiteRooks : blackRooks;
     }
 
+    /**
+     * Retrieves the bitboard for queens of the specified color.
+     *
+     * @param isWhite true for White queens, false for Black
+     * @return the queen bitboard
+         */
     public long getQueens(boolean isWhite) {
         return isWhite ? whiteQueens : blackQueens;
     }
 
+    /**
+     * Retrieves the bitboard for the king of the specified color.
+     *
+     * @param isWhite true for White king, false for Black
+     * @return the king bitboard
+         */
     public long getKing(boolean isWhite) {
         return isWhite ? whiteKing : blackKing;
     }
-
+    /**
+     * Retrieves the bitboard for all pieces of the specified color.
+     *
+     * @param isWhite true for White pieces, false for Black
+     * @return the bitboard representing all pieces of the specified color
+         */
     public long getPieces(boolean isWhite) {
         return isWhite ? whitePieces : blackPieces;
     }
 
+    /**
+     * Checks if the specified side has non-pawn, non-king pieces remaining.
+     * Useful for evaluating endgame conditions.
+     *
+     * @param isWhite true to check White pieces, false for Black
+     * @return true if there are knights, bishops or rooks or queens remaining, false otherwise
+         */
     public boolean hasPiecesRemaining(boolean isWhite) {
         if (isWhite && Bitwise.countBits(whiteKnights) > 0 || Bitwise.countBits(whiteBishops) > 0 ||
                 Bitwise.countBits(whiteRooks) > 0 || Bitwise.countBits(whiteQueens) > 0) {
@@ -343,5 +412,4 @@ public class Board {
         else return Bitwise.countBits(blackKnights) > 0 || Bitwise.countBits(blackBishops) > 0 ||
                 Bitwise.countBits(blackRooks) > 0 || Bitwise.countBits(blackQueens) > 0;
     }
-
 }
