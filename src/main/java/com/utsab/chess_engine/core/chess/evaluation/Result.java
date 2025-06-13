@@ -1,6 +1,6 @@
 package com.utsab.chess_engine.core.chess.evaluation;
 
-import com.utsab.chess_engine.core.chess.board.Bitwise;
+import com.utsab.chess_engine.core.chess.board.BitwiseOperations;
 import com.utsab.chess_engine.core.chess.board.Board;
 import com.utsab.chess_engine.core.chess.board.GameState;
 import com.utsab.chess_engine.core.chess.search.Search;
@@ -55,8 +55,8 @@ public class Result {
         long whitePieces = board.getWhiteKnights() | board.getWhiteBishops();
         long blackPieces = board.getBlackKnights() |  board.getBlackBishops();
 
-        return (Bitwise.countBits(whitePieces) == 0 || Bitwise.countBits(whitePieces) == 1)
-                && (Bitwise.countBits(blackPieces) == 0 || Bitwise.countBits(blackPieces) == 1);
+        return (BitwiseOperations.countBits(whitePieces) == 0 || BitwiseOperations.countBits(whitePieces) == 1)
+                && (BitwiseOperations.countBits(blackPieces) == 0 || BitwiseOperations.countBits(blackPieces) == 1);
     }
 
     public static boolean isFiftyMoveRule(Board board) {

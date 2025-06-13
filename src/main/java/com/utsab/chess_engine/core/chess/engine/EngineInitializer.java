@@ -22,6 +22,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+/**
+ * Initializes the chess engine by loading default or custom configurations and opening books, and assembling the engine
+ * components. Provides factory methods for creating engine instances and their dependencies.
+ *
+ * @author Utsab Dahal
+ * @version 1.0
+ * @since 2025
+ */
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class EngineInitializer {
 
@@ -29,6 +37,12 @@ public class EngineInitializer {
     static final String DEFAULT_BOOK_LOCATION = "/opening_book.txt";
     static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
+    /**
+     * Creates and configures a new chess engine instance with default settings and components.
+     *
+     * @return a fully initialized chess engine
+     * @throws RuntimeException if configuration or opening book loading fails
+     */
     public static Engine loadEngine() {
         EngineConfig config = loadDefaultConfig();
         config.postInitialise();
@@ -41,10 +55,23 @@ public class EngineInitializer {
         return new Engine(config, book, moveGenerator.get(), searcher);
     }
 
+    /**
+     * Loads the default engine configuration from the default JSON resource.
+     *
+     * @return the loaded engine configuration
+     * @throws RuntimeException if the configuration file cannot be read
+     */
     public static EngineConfig loadDefaultConfig() {
         return loadConfig(DEFAULT_CONFIG_LOCATION);
     }
 
+    /**
+     * Loads an engine configuration from the specified JSON resource.
+     *
+     * @param configLocation the path to the JSON configuration file
+     * @return the loaded engine configuration
+     * @throws RuntimeException if the configuration file cannot be read
+     */
     public static EngineConfig loadConfig(String configLocation) {
         try (InputStream inputStream = EngineInitializer.class.getResourceAsStream(configLocation)) {
             EngineConfig config = OBJECT_MAPPER.readValue(inputStream, EngineConfig.class);
@@ -55,10 +82,23 @@ public class EngineInitializer {
         }
     }
 
+    /**
+     * Loads the default opening book from the default resource.
+     *
+     * @return the loaded opening book, or null if the resource is not found
+     * @throws RuntimeException if the opening book file cannot be read
+     */
     public static OpeningBook loadDefaultOpeningBook() {
         return loadOpeningBook(DEFAULT_BOOK_LOCATION);
     }
 
+    /**
+     * Loads an opening book from the specified resource.
+     *
+     * @param bookLocation the path to the opening book file
+     * @return the loaded opening book, or null if the resource is not found
+     * @throws RuntimeException if the opening book file cannot be read
+     */
     public static OpeningBook loadOpeningBook(String bookLocation) {
         try (InputStream inputStream = EngineInitializer.class.getResourceAsStream(bookLocation)) {
             if (inputStream == null) {
@@ -73,5 +113,4 @@ public class EngineInitializer {
             throw new RuntimeException(e);
         }
     }
-
 }

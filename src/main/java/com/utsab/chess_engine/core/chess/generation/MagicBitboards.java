@@ -1,7 +1,7 @@
 package com.utsab.chess_engine.core.chess.generation;
 
 import com.utsab.chess_engine.core.chess.board.Bits;
-import com.utsab.chess_engine.core.chess.board.Bitwise;
+import com.utsab.chess_engine.core.chess.board.BitwiseOperations;
 import com.utsab.chess_engine.core.chess.utils.BoardUtils;
 
 import java.util.ArrayList;
@@ -199,8 +199,8 @@ public class MagicBitboards {
      */
     public static long pawnAttacks(long pawns, boolean isWhite) {
         return isWhite ?
-                (Bitwise.shiftNorthWest(pawns) &~ Bits.FILE_H) | (Bitwise.shiftNorthEast(pawns) &~ Bits.FILE_A) :
-                (Bitwise.shiftSouthWest(pawns) &~ Bits.FILE_H) | (Bitwise.shiftSouthEast(pawns) &~ Bits.FILE_A);
+                (BitwiseOperations.shiftNorthWest(pawns) &~ Bits.FILE_H) | (BitwiseOperations.shiftNorthEast(pawns) &~ Bits.FILE_A) :
+                (BitwiseOperations.shiftSouthWest(pawns) &~ Bits.FILE_H) | (BitwiseOperations.shiftSouthEast(pawns) &~ Bits.FILE_A);
     }
 
     /**

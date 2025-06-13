@@ -1,6 +1,6 @@
 package com.utsab.chess_engine.core.chess.search.moveordering;
 
-import com.utsab.chess_engine.core.chess.board.Bitwise;
+import com.utsab.chess_engine.core.chess.board.BitwiseOperations;
 import com.utsab.chess_engine.core.chess.board.Board;
 import com.utsab.chess_engine.core.chess.board.Move;
 import com.utsab.chess_engine.core.chess.board.Piece;
@@ -111,7 +111,7 @@ public class StaticExchangeEvaluator {
                 case KING -> moveGenerator.getKingAttacks(board, square, !isWhite);
             };
             if ((attackMask & pieces) != 0) {
-                int startSquare = Bitwise.getNextBit(attackMask & pieces);
+                int startSquare = BitwiseOperations.getNextBit(attackMask & pieces);
                 return new Move(startSquare, square);
             }
         }

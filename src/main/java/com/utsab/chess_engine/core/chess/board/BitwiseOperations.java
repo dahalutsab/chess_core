@@ -13,7 +13,7 @@ import com.utsab.chess_engine.core.chess.utils.BoardUtils;
  * @since 2025
  * @see <a href="https://www.chessprogramming.org/Bitboards">Chess Programming Wiki - Bitboards</a>
  */
-public class Bitwise {
+public class BitwiseOperations {
 
     /**
      * Retrieves the index of the least-significant set bit (LSB) in a bitboard.

@@ -403,11 +403,11 @@ public class Board {
      * @return true if there are knights, bishops or rooks or queens remaining, false otherwise
      */
     public boolean hasPiecesRemaining(boolean isWhite) {
-        if (isWhite && Bitwise.countBits(whiteKnights) > 0 || Bitwise.countBits(whiteBishops) > 0 ||
-                Bitwise.countBits(whiteRooks) > 0 || Bitwise.countBits(whiteQueens) > 0) {
+        if (isWhite && BitwiseOperations.countBits(whiteKnights) > 0 || BitwiseOperations.countBits(whiteBishops) > 0 ||
+                BitwiseOperations.countBits(whiteRooks) > 0 || BitwiseOperations.countBits(whiteQueens) > 0) {
             return true;
         }
-        else return Bitwise.countBits(blackKnights) > 0 || Bitwise.countBits(blackBishops) > 0 ||
-                Bitwise.countBits(blackRooks) > 0 || Bitwise.countBits(blackQueens) > 0;
+        else return BitwiseOperations.countBits(blackKnights) > 0 || BitwiseOperations.countBits(blackBishops) > 0 ||
+                BitwiseOperations.countBits(blackRooks) > 0 || BitwiseOperations.countBits(blackQueens) > 0;
     }
 }

@@ -1,6 +1,6 @@
 package com.utsab.chess_engine.core.chess.generation.check;
 
-import com.utsab.chess_engine.core.chess.board.Bitwise;
+import com.utsab.chess_engine.core.chess.board.BitwiseOperations;
 import com.utsab.chess_engine.core.chess.board.Board;
 import com.utsab.chess_engine.core.chess.generation.MagicBitboards;
 
@@ -24,7 +24,7 @@ public class PinCalculator {
         pinMask = 0L;
         pinRayMasks = new long[64];
 
-        int kingSquare = Bitwise.getNextBit(board.getKing(isWhite));
+        int kingSquare = BitwiseOperations.getNextBit(board.getKing(isWhite));
         long friendlies = board.getPieces(isWhite);
         long opponents = board.getPieces(!isWhite);
 
@@ -55,24 +55,24 @@ public class PinCalculator {
      */
     private void calculatePins(int kingSquare, long friendlies, long opponents, long possiblePinners) {
         while (possiblePinners != 0) {
-            int possiblePinner = Bitwise.getNextBit(possiblePinners);
+            int possiblePinner = BitwiseOperations.getNextBit(possiblePinners);
             long ray = rayCalculator.rayBetween(kingSquare, possiblePinner);
 
             // Skip if there are opponents between the king and the possible pinner
             if ((ray & opponents) != 0) {
-                possiblePinners = Bitwise.popBit(possiblePinners);
+                possiblePinners = BitwiseOperations.popBit(possiblePinners);
                 continue;
             }
 
             long friendliesBetween = ray & friendlies;
             // If there is exactly one friendly piece between the king and the pinner, it's pinned
-            if (Bitwise.countBits(friendliesBetween) == 1) {
-                int friendlySquare = Bitwise.getNextBit(friendliesBetween);
+            if (BitwiseOperations.countBits(friendliesBetween) == 1) {
+                int friendlySquare = BitwiseOperations.getNextBit(friendliesBetween);
                 pinMask |= friendliesBetween;
                 pinRayMasks[friendlySquare] = ray | (1L << possiblePinner);
             }
 
-            possiblePinners = Bitwise.popBit(possiblePinners);
+            possiblePinners = BitwiseOperations.popBit(possiblePinners);
         }
     }
 }

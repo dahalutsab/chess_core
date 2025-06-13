@@ -1,6 +1,6 @@
 package com.utsab.chess_engine.core.chess.evaluation;
 
-import com.utsab.chess_engine.core.chess.board.Bitwise;
+import com.utsab.chess_engine.core.chess.board.BitwiseOperations;
 import com.utsab.chess_engine.core.chess.board.Board;
 import com.utsab.chess_engine.core.chess.board.Piece;
 import com.utsab.chess_engine.core.chess.engine.EngineConfig;
@@ -15,11 +15,11 @@ public record Material(int pawns,
                        int queens) {
 
     public static Material fromBoard(Board board, boolean isWhite) {
-        int pawns = Bitwise.countBits(board.getPawns(isWhite));
-        int knights = Bitwise.countBits(board.getKnights(isWhite));
-        int bishops = Bitwise.countBits(board.getBishops(isWhite));
-        int rooks = Bitwise.countBits(board.getRooks(isWhite));
-        int queens = Bitwise.countBits(board.getQueens(isWhite));
+        int pawns = BitwiseOperations.countBits(board.getPawns(isWhite));
+        int knights = BitwiseOperations.countBits(board.getKnights(isWhite));
+        int bishops = BitwiseOperations.countBits(board.getBishops(isWhite));
+        int rooks = BitwiseOperations.countBits(board.getRooks(isWhite));
+        int queens = BitwiseOperations.countBits(board.getQueens(isWhite));
         return new Material(pawns, knights, bishops, rooks, queens);
     }
 
