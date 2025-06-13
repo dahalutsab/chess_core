@@ -46,7 +46,7 @@ public class MoveOrderer implements MoveOrdering {
     };
 
     private Move[][] killerMoves = new Move[MAX_KILLER_MOVE_PLY_DEPTH][MAX_KILLER_MOVES_PER_PLY];
-    private int[][][] historyMoves = new int[2][64][64];
+    private final int[][][] historyMoves = new int[2][64][64];
 
     /**
      * Orders the given list of moves based on the defined move-ordering strategy.

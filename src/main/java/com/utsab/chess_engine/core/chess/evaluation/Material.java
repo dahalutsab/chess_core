@@ -26,7 +26,7 @@ public record Material(int pawns,
     public int sum(EngineConfig config, float phase) {
         int middlegameScore = sum(config.getPieceValues()[0], config.getBishopPairBonus());
         int endgameScore = sum(config.getPieceValues()[1], config.getBishopPairBonus());
-        return Phase.taperedEval(middlegameScore, endgameScore, phase);
+        return EvaluationPhase.interpolateEvaluation(middlegameScore, endgameScore, phase);
     }
 
     /**

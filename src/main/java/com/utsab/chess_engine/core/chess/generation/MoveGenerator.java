@@ -128,8 +128,8 @@ public class MoveGenerator implements MoveGeneration {
             filterMask = opponents;
             promotionFilterMask = opponents;
         } else if (filter == MoveFilter.CAPTURES_AND_CHECKS) {
-            filterMask = opponents | Attacks.pawnAttacks(1L << opponentKing, !isWhite);
-            promotionFilterMask = opponents | Attacks.bishopAttacks(opponentKing, occupied) | Attacks.rookAttacks(opponentKing, occupied);
+            filterMask = opponents | MagicBitboards.pawnAttacks(1L << opponentKing, !isWhite);
+            promotionFilterMask = opponents | MagicBitboards.bishopAttacks(opponentKing, occupied) | MagicBitboards.rookAttacks(opponentKing, occupied);
         }
 
         if (filter != MoveFilter.CAPTURES_ONLY) {
@@ -240,7 +240,7 @@ public class MoveGenerator implements MoveGeneration {
             filterMask = opponents;
         } else if (filter == MoveFilter.CAPTURES_AND_CHECKS) {
             int opponentKing = Bitwise.getNextBit(board.getKing(!isWhite));
-            filterMask = opponents | Attacks.knightAttacks(opponentKing);
+            filterMask = opponents | MagicBitboards.knightAttacks(opponentKing);
         }
 
         // Exclude pinned knights from generating moves
@@ -266,7 +266,7 @@ public class MoveGenerator implements MoveGeneration {
         long friendlies = board.getPieces(isWhite);
         long opponents = board.getPieces(!isWhite);
         long filterMask = filter == MoveFilter.ALL ? Bits.ALL_SQUARES : opponents;
-        long kingMoves = Attacks.kingAttacks(startSquare) & ~friendlies & filterMask;
+        long kingMoves = MagicBitboards.kingAttacks(startSquare) & ~friendlies & filterMask;
 
         // Temporarily remove the king from the board
         board.toggleSquare(Piece.KING, isWhite, startSquare);
@@ -371,10 +371,10 @@ public class MoveGenerator implements MoveGeneration {
         int opponentKing = Bitwise.getNextBit(board.getKing(!isWhite));
         long filterMask = opponents;
         if (isDiagonal) {
-            filterMask |= Attacks.bishopAttacks(opponentKing, occupied);
+            filterMask |= MagicBitboards.bishopAttacks(opponentKing, occupied);
         }
         if (isOrthogonal) {
-            filterMask |= Attacks.rookAttacks(opponentKing, occupied);
+            filterMask |= MagicBitboards.rookAttacks(opponentKing, occupied);
         }
         return filterMask;
     }
@@ -399,7 +399,7 @@ public class MoveGenerator implements MoveGeneration {
 
     public long getKnightAttacks(Board board, int square, boolean isWhite) {
         long friendlies = board.getPieces(isWhite);
-        return Attacks.knightAttacks(square) &~ friendlies;
+        return MagicBitboards.knightAttacks(square) &~ friendlies;
     }
 
     public long getBishopAttacks(Board board, int square, boolean isWhite) {
@@ -416,7 +416,7 @@ public class MoveGenerator implements MoveGeneration {
 
     public long getKingAttacks(Board board, int square, boolean isWhite) {
         long friendlies = board.getPieces(isWhite);
-        return Attacks.kingAttacks(square) &~ friendlies;
+        return MagicBitboards.kingAttacks(square) &~ friendlies;
     }
 
     private long getSlidingAttacks(Board board, int square, boolean isWhite, boolean isDiagonal, boolean isOrthogonal) {
@@ -424,10 +424,10 @@ public class MoveGenerator implements MoveGeneration {
         long occ = board.getOccupied();
         long friendlies = board.getPieces(isWhite);
         if (isOrthogonal) {
-            attackMask |= Attacks.rookAttacks(square, occ) &~ friendlies;
+            attackMask |= MagicBitboards.rookAttacks(square, occ) &~ friendlies;
         }
         if (isDiagonal) {
-            attackMask |= Attacks.bishopAttacks(square, occ) &~ friendlies;
+            attackMask |= MagicBitboards.bishopAttacks(square, occ) &~ friendlies;
         }
         return attackMask;
     }

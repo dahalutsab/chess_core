@@ -64,9 +64,9 @@ public class Score {
 
     public void addPiecePlacementScore(int middlegameScore, int endgameScore, boolean isWhite) {
         if (isWhite) {
-            whitePiecePlacementScore += Phase.taperedEval(middlegameScore, endgameScore, phase);
+            whitePiecePlacementScore += EvaluationPhase.interpolateEvaluation(middlegameScore, endgameScore, phase);
         } else {
-            blackPiecePlacementScore += Phase.taperedEval(middlegameScore, endgameScore, phase);
+            blackPiecePlacementScore += EvaluationPhase.interpolateEvaluation(middlegameScore, endgameScore, phase);
         }
     }
 
@@ -118,17 +118,17 @@ public class Score {
 
     public int sum(boolean isWhite) {
 
-        int whiteMaterialScore = Phase.taperedEval(whiteMaterialMgScore, whiteMaterialEgScore, phase);
-        int blackMaterialScore = Phase.taperedEval(blackMaterialMgScore, blackMaterialEgScore, phase);
+        int whiteMaterialScore = EvaluationPhase.interpolateEvaluation(whiteMaterialMgScore, whiteMaterialEgScore, phase);
+        int blackMaterialScore = EvaluationPhase.interpolateEvaluation(blackMaterialMgScore, blackMaterialEgScore, phase);
 
-        int whiteMobilityScore = Phase.taperedEval(whiteMobilityMgScore, whiteMobilityEgScore, phase);
-        int blackMobilityScore = Phase.taperedEval(blackMobilityMgScore, blackMobilityEgScore, phase);
+        int whiteMobilityScore = EvaluationPhase.interpolateEvaluation(whiteMobilityMgScore, whiteMobilityEgScore, phase);
+        int blackMobilityScore = EvaluationPhase.interpolateEvaluation(blackMobilityMgScore, blackMobilityEgScore, phase);
 
-        int whitePawnStructureScore = Phase.taperedEval(whitePawnStructureMgScore, whitePawnStructureEgScore, phase);
-        int blackPawnStructureScore = Phase.taperedEval(blackPawnStructureMgScore, blackPawnStructureEgScore, phase);
+        int whitePawnStructureScore = EvaluationPhase.interpolateEvaluation(whitePawnStructureMgScore, whitePawnStructureEgScore, phase);
+        int blackPawnStructureScore = EvaluationPhase.interpolateEvaluation(blackPawnStructureMgScore, blackPawnStructureEgScore, phase);
 
-        int whiteRookScore = Phase.taperedEval(whiteRookMgScore, whiteRookEgScore, phase);
-        int blackRookScore = Phase.taperedEval(blackRookMgScore, blackRookEgScore, phase);
+        int whiteRookScore = EvaluationPhase.interpolateEvaluation(whiteRookMgScore, whiteRookEgScore, phase);
+        int blackRookScore = EvaluationPhase.interpolateEvaluation(blackRookMgScore, blackRookEgScore, phase);
 
         int whiteScore = whiteMaterialScore + whitePiecePlacementScore + whiteMobilityScore + whitePawnStructureScore +
                 whiteKingSafetyScore + whiteRookScore + whiteMopUpScore + whiteTempoBonus;

@@ -5,7 +5,7 @@ import com.utsab.chess_engine.core.chess.board.Bitwise;
 import com.utsab.chess_engine.core.chess.board.Board;
 import com.utsab.chess_engine.core.chess.board.Piece;
 import com.utsab.chess_engine.core.chess.engine.EngineConfig;
-import com.utsab.chess_engine.core.chess.generation.Attacks;
+import com.utsab.chess_engine.core.chess.generation.MagicBitboards;
 import com.utsab.chess_engine.core.chess.transposition.pawn.PawnHashEntry;
 import com.utsab.chess_engine.core.chess.transposition.pawn.PawnHashEntry.PawnScore;
 import com.utsab.chess_engine.core.chess.transposition.pawn.PawnHashTable;
@@ -105,7 +105,7 @@ public class Evaluator implements Evaluation {
         Material whiteMaterial = Material.fromBoard(board, true);
         Material blackMaterial = Material.fromBoard(board, false);
 
-        float phase = Phase.fromMaterial(whiteMaterial, blackMaterial, config);
+        float phase = EvaluationPhase.calculatePhase(whiteMaterial, blackMaterial, config);
         score.setPhase(phase);
 
         int whiteMaterialMiddlegameScore = whiteMaterial.sum(config.getPieceValues()[0], config.getBishopPairBonus());
@@ -121,8 +121,8 @@ public class Evaluator implements Evaluation {
         long friendlyBlackBlockers = blackKing | blackPawns;
 
         // Pawn attacks used during mobility calculations
-        long whitePawnAttacks = Attacks.pawnAttacks(whitePawns, true);
-        long blackPawnAttacks = Attacks.pawnAttacks(blackPawns, false);
+        long whitePawnAttacks = MagicBitboards.pawnAttacks(whitePawns, true);
+        long blackPawnAttacks = MagicBitboards.pawnAttacks(blackPawns, false);
 
         scorePawnsWithHash(board, whitePawns, blackPawns);
 
@@ -251,7 +251,7 @@ public class Evaluator implements Evaluation {
             piecePlacementMgScore += knightMgTable[squareIndex];
             piecePlacementEgScore += knightEgTable[squareIndex];
 
-            long attacks = Attacks.knightAttacks(knight);
+            long attacks = MagicBitboards.knightAttacks(knight);
             long moves = attacks &~ friendlyBlockers &~ opponentPawnAttacks;
             int moveCount = Bitwise.countBits(moves);
             mobilityMgScore += knightMgMobility[moveCount];
@@ -286,7 +286,7 @@ public class Evaluator implements Evaluation {
             piecePlacementMgScore += bishopMgTable[squareIndex];
             piecePlacementEgScore += bishopEgTable[squareIndex];
 
-            long attacks = Attacks.bishopAttacks(bishop, blockers);
+            long attacks = MagicBitboards.bishopAttacks(bishop, blockers);
             long moves = attacks &~ friendlyBlockers &~ opponentPawnAttacks;
             int moveCount = Bitwise.countBits(moves);
             mobilityMgScore += bishopMgMobility[moveCount];
@@ -327,7 +327,7 @@ public class Evaluator implements Evaluation {
             piecePlacementMgScore += rookMgTable[squareIndex];
             piecePlacementEgScore += rookEgTable[squareIndex];
 
-            long attacks = Attacks.rookAttacks(rook, blockers);
+            long attacks = MagicBitboards.rookAttacks(rook, blockers);
             long moves = attacks &~ friendlyBlockers &~ opponentPawnAttacks;
             int moveCount = Bitwise.countBits(moves);
             mobilityMgScore += rookMgMobility[moveCount];
@@ -376,7 +376,7 @@ public class Evaluator implements Evaluation {
             piecePlacementMgScore += queenMgTable[squareIndex];
             piecePlacementEgScore += queenEgTable[squareIndex];
 
-            long attacks = Attacks.bishopAttacks(queen, blockers) | Attacks.rookAttacks(queen, blockers);
+            long attacks = MagicBitboards.bishopAttacks(queen, blockers) | MagicBitboards.rookAttacks(queen, blockers);
             long moves = attacks &~ friendlyBlockers &~ opponentPawnAttacks;
             int moveCount = Bitwise.countBits(moves);
             mobilityMgScore += queenMgMobility[moveCount];
@@ -468,7 +468,7 @@ public class Evaluator implements Evaluation {
         // Bonus for pushing opponent king to the edges of the board
         mopUpScore += Distance.centerManhattan(opponentKingSquare) * config.getKingCenterManhattanDistanceMultiplier();
 
-        return (int) (mopUpScore * (1 - Phase.fromMaterial(opponentMaterial, config)));
+        return (int) (mopUpScore * (1 - EvaluationPhase.calculatePhase(opponentMaterial, config)));
     }
 
     private int calculatePawnShieldPenalty(int kingSquare, int kingFile, long pawns) {

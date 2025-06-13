@@ -166,8 +166,7 @@ public class Board {
 
     /**
      * Reverts the board state to before the last move, restoring piece bitboards and game state.
-     *
-         */
+     **/
     public void unmakeMove() {
         isWhiteToMove = !isWhiteToMove;
         Move lastMove = moveHistory.pop();
@@ -215,8 +214,7 @@ public class Board {
 
     /**
      * Applies a null move, passing the turn to the opponent without moving pieces, used in null-move pruning.
-     *
-         */
+     **/
     public void makeNullMove() {
         isWhiteToMove = !isWhiteToMove;
         long newZobristKey = Zobrist.updateKeyAfterNullMove(gameState.getZobristKey(), gameState.getEnPassantFile());
@@ -227,8 +225,7 @@ public class Board {
 
     /**
      * Reverts a null move, restoring the previous board state.
-     *
-         */
+     **/
     public void unmakeNullMove() {
         isWhiteToMove = !isWhiteToMove;
         gameState = gameStateHistory.pop();
@@ -241,7 +238,7 @@ public class Board {
      * @param isWhite true for White pieces, false for Black
      * @param startSquare the starting square (0-63)
      * @param endSquare the ending square (0-63)
-         */
+     **/
     public void toggleSquares(Piece type, boolean isWhite, int startSquare, int endSquare) {
         long toggleMask = (1L << startSquare | 1L << endSquare);
         toggle(type, isWhite, toggleMask);
@@ -253,7 +250,7 @@ public class Board {
      * @param type the piece type
      * @param isWhite true for White pieces, false for Black
      * @param square the square index (0-63)
-         */
+     */
     public void toggleSquare(Piece type, boolean isWhite, int square) {
         long toggleMask = 1L << square;
         toggle(type, isWhite, toggleMask);
@@ -265,7 +262,7 @@ public class Board {
      * @param type the piece type
      * @param isWhite true for White pieces, false for Black
      * @param toggleMask the bitboard mask to toggle
-         */
+     */
     private void toggle(Piece type, boolean isWhite, long toggleMask) {
         switch (type) {
             case PAWN ->    { if (isWhite) whitePawns ^= toggleMask;    else blackPawns ^= toggleMask; }
@@ -280,7 +277,7 @@ public class Board {
     /**
      * Recalculates the combined bitboards for White pieces, Black pieces, and occupied squares.
      *
-         */
+     */
     public void recalculatePieces() {
         whitePieces = whitePawns | whiteKnights | whiteBishops | whiteRooks | whiteQueens | whiteKing;
         blackPieces = blackPawns | blackKnights | blackBishops | blackRooks | blackQueens | blackKing;
@@ -294,7 +291,7 @@ public class Board {
      * @param endSquare the ending square of the move
      * @param pieceType the type of piece moved
      * @return the updated castling rights bitmask
-         */
+     */
     private int calculateCastlingRights(int startSquare, int endSquare, Piece pieceType) {
         int newCastlingRights = gameState.getCastlingRights();
         if (newCastlingRights == 0b0000) {
@@ -323,7 +320,7 @@ public class Board {
      *
      * @param square the square index (0-63)
      * @return the piece at the square, or null if empty
-         */
+     */
     public Piece pieceAt(int square) {
         return pieceList[square];
     }
@@ -333,7 +330,7 @@ public class Board {
      *
      * @param isWhite true for White pawns, false for Black
      * @return the pawn bitboard
-         */
+     */
     public long getPawns(boolean isWhite) {
         return isWhite ? whitePawns : blackPawns;
     }
@@ -343,7 +340,7 @@ public class Board {
      *
      * @param isWhite true for White knights, false for Black
      * @return the knight bitboard
-         */
+     */
     public long getKnights(boolean isWhite) {
         return isWhite ? whiteKnights : blackKnights;
     }
@@ -353,7 +350,7 @@ public class Board {
      *
      * @param isWhite true for White bishops, false for Black
      * @return the bishop bitboard
-         */
+     */
     public long getBishops(boolean isWhite) {
         return isWhite ? whiteBishops : blackBishops;
     }
@@ -363,7 +360,7 @@ public class Board {
      *
      * @param isWhite true for White rooks, false for Black
      * @return the rook bitboard
-         */
+     */
     public long getRooks(boolean isWhite) {
         return isWhite ? whiteRooks : blackRooks;
     }
@@ -373,7 +370,7 @@ public class Board {
      *
      * @param isWhite true for White queens, false for Black
      * @return the queen bitboard
-         */
+     */
     public long getQueens(boolean isWhite) {
         return isWhite ? whiteQueens : blackQueens;
     }
@@ -383,16 +380,17 @@ public class Board {
      *
      * @param isWhite true for White king, false for Black
      * @return the king bitboard
-         */
+     */
     public long getKing(boolean isWhite) {
         return isWhite ? whiteKing : blackKing;
     }
+
     /**
      * Retrieves the bitboard for all pieces of the specified color.
      *
      * @param isWhite true for White pieces, false for Black
      * @return the bitboard representing all pieces of the specified color
-         */
+     */
     public long getPieces(boolean isWhite) {
         return isWhite ? whitePieces : blackPieces;
     }
@@ -403,7 +401,7 @@ public class Board {
      *
      * @param isWhite true to check White pieces, false for Black
      * @return true if there are knights, bishops or rooks or queens remaining, false otherwise
-         */
+     */
     public boolean hasPiecesRemaining(boolean isWhite) {
         if (isWhite && Bitwise.countBits(whiteKnights) > 0 || Bitwise.countBits(whiteBishops) > 0 ||
                 Bitwise.countBits(whiteRooks) > 0 || Bitwise.countBits(whiteQueens) > 0) {

@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
  * Entrypoint for the UChess chess engine. UChess communicates using the Universal Chess Interface protocol (UCI).
  * This adapter acts as a UCI interface which translates the incoming commands to instructions for the {@link Engine},
  * which is responsible for actually playing the game of chess.
+ *
  * @see <a href="https://www.chessprogramming.org/UCI">Chess Programming Wiki</a>
  */
 //@FieldDefaults(level = AccessLevel.PRIVATE)
@@ -23,9 +24,9 @@ public class Core {
 
     public static final Engine ENGINE = EngineInitializer.loadEngine();
     static final Scanner SCANNER = new Scanner(System.in);
-    static final String[] POSITION_LABELS = new String[] { "position", "fen", "moves" };
-    static final String[] GO_LABELS = new String[] { "go", "movetime", "wtime", "btime", "winc", "binc", "movestogo" };
-    static final String[] SETOPTION_LABELS = new String[] { "setoption", "name", "value" };
+    static final String[] POSITION_LABELS = new String[]{"position", "fen", "moves"};
+    static final String[] GO_LABELS = new String[]{"go", "movetime", "wtime", "btime", "winc", "binc", "movestogo"};
+    static final String[] SETOPTION_LABELS = new String[]{"setoption", "name", "value"};
 
     public static void UCI() {
         String command = "";
@@ -34,16 +35,16 @@ public class Core {
             if (!command.isEmpty()) {
                 String commandType = command.trim().toLowerCase().split(" ")[0];
                 switch (commandType) {
-                    case "uci" ->         handleUci();
-                    case "isready" ->     handleIsReady();
-                    case "setoption" ->   handleSetOption(command);
-                    case "ucinewgame" ->  handleNewGame();
-                    case "position" ->    handlePosition(command);
-                    case "go" ->          handleGo(command);
-                    case "ponderhit" ->   handlePonderHit();
-                    case "stop" ->        handleStop();
-                    case "quit" ->        handleQuit();
-                    default ->            write("Unrecognised command: " + command);
+                    case "uci" -> handleUci();
+                    case "isready" -> handleIsReady();
+                    case "setoption" -> handleSetOption(command);
+                    case "ucinewgame" -> handleNewGame();
+                    case "position" -> handlePosition(command);
+                    case "go" -> handleGo(command);
+                    case "ponderhit" -> handlePonderHit();
+                    case "stop" -> handleStop();
+                    case "quit" -> handleQuit();
+                    default -> write("Unrecognised command: " + command);
                 }
             }
         }
@@ -69,11 +70,20 @@ public class Core {
     public static void handleSetOption(String command) {
         String optionType = getLabelString(command, "name", SETOPTION_LABELS, "");
         switch (optionType) {
-            case "Hash":     setHashSize(command); break;
-            case "Threads":  setThreadCount(command); break;
-            case "OwnBook":  setOwnBook(command); break;
-            case "Ponder":   setPonder(command); break;
-            default:         write("unrecognised option name " + optionType);
+            case "Hash":
+                setHashSize(command);
+                break;
+            case "Threads":
+                setThreadCount(command);
+                break;
+            case "OwnBook":
+                setOwnBook(command);
+                break;
+            case "Ponder":
+                setPonder(command);
+                break;
+            default:
+                write("unrecognised option name " + optionType);
         }
     }
 
@@ -86,11 +96,9 @@ public class Core {
         String fen;
         if (command.contains("startpos")) {
             fen = FEN.STARTING_POSITION;
-        }
-        else if (command.contains("fen")) {
+        } else if (command.contains("fen")) {
             fen = getLabelString(command, "fen", POSITION_LABELS, "");
-        }
-        else {
+        } else {
             write("Invalid position command, expecting 'position' or 'fen'.");
             return;
         }
@@ -101,8 +109,7 @@ public class Core {
                 moves.addAll(new ArrayList<>(Arrays.stream(moveString.split(" "))
                         .map(Notation::fromCombinedNotation)
                         .toList()));
-            }
-            else {
+            } else {
                 write("Invalid position command, 'moves' has no content.");
                 return;
             }
@@ -120,8 +127,7 @@ public class Core {
         int thinkTime;
         if (command.contains("movetime")) {
             thinkTime = getLabelInt(command, "movetime", GO_LABELS);
-        }
-        else {
+        } else {
             int timeWhiteMs = getLabelInt(command, "wtime", GO_LABELS);
             int timeBlackMs = getLabelInt(command, "btime", GO_LABELS);
             int incrementWhiteMs = getLabelInt(command, "winc", GO_LABELS);

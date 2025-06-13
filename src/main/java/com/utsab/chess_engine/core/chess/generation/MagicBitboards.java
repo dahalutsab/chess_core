@@ -8,12 +8,33 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class Attacks {
+/**
+ * Utility class for generating and using magic bitboards for efficient move generation of sliding pieces (rooks and bishops)
+ * in a chess engine. This class provides precomputed attack tables, magic numbers, and methods to calculate attack and movement
+ * masks for rooks, bishops, knights, kings, and pawns. It leverages magic bitboards to optimize legal move generation by
+ * reducing the computational overhead of calculating sliding piece moves during gameplay.
+ * <p>
+ * The class includes:
+ * <ul>
+ *   <li>Precomputed attack tables for knights and kings, stored as bitboards for each square.</li>
+ *   <li>Magic bitboard tables and lookup structures for rooks and bishops to handle sliding moves efficiently.</li>
+ *   <li>Methods for generating pawn attacks, movement masks, and attack masks for all piece types.</li>
+ *   <li>Utility methods for initializing magic lookup tables used in move generation.</li>
+ * </ul>
+ * <p>
+ * Magic bitboards use a hashing technique to map occupancy patterns to precomputed attack sets, enabling fast lookup of valid
+ * moves for sliding pieces. This implementation ensures compatibility with the UCI protocol and existing chess engine logic.
+ *
+ * @author Utsab Dahal
+ * @version 1.0
+ * @since 2025
+ */
+public class MagicBitboards {
 
-    public static final long[] WHITE_PAWN_ATTACKS = generateWhitePawnAttacks();
-
-    public static final long[] BLACK_PAWN_ATTACKS = generateBlackPawnAttacks();
-
+    /**
+     * Precomputed attack bitboards for knights from each square on the board. Each entry represents the possible
+     * destinations a knight can move to from the corresponding square, encoded as a bitboard.
+     */
     public static final long[] KNIGHT_ATTACKS = new long[] {
             0x0000000000020400L, 0x0000000000050800L, 0x00000000000a1100L, 0x0000000000142200L,
             0x0000000000284400L, 0x0000000000508800L, 0x0000000000a01000L, 0x0000000000402000L,
@@ -33,6 +54,10 @@ public class Attacks {
             0x0044280000000000L, 0x0088500000000000L, 0x0010a00000000000L, 0x0020400000000000L
     };
 
+    /**
+     * Precomputed attack bitboards for kings from each square on the board. Each entry represents the possible
+     * destinations a king can move to (one square in any direction) from the corresponding square, encoded as a bitboard.
+     */
     public static final long[] KING_ATTACKS = new long[] {
             0x0000000000000302L, 0x0000000000000705L, 0x0000000000000e0aL, 0x0000000000001c14L,
             0x0000000000003828L, 0x0000000000007050L, 0x000000000000e0a0L, 0x000000000000c040L,
@@ -52,6 +77,10 @@ public class Attacks {
             0x2838000000000000L, 0x5070000000000000L, 0xa0e0000000000000L, 0x40c0000000000000L
     };
 
+    /**
+     * Precomputed magic numbers for rooks, used to hash occupancy patterns to indices in the rook attack table.
+     * Each entry corresponds to a square on the board.
+     */
     public static final long[] ROOK_MAGICS = new long[] {
             0x0080001020400080L, 0x0040001000200040L, 0x0080081000200080L, 0x0080040800100080L,
             0x0080020400080080L, 0x0080010200040080L, 0x0080008001000200L, 0x0080002040800100L,
@@ -71,6 +100,10 @@ public class Attacks {
             0x0001000204080011L, 0x0001000204000801L, 0x0001000082000401L, 0x0001FFFAABFAD1A2L
     };
 
+    /**
+     * Precomputed magic numbers for bishops, used to hash occupancy patterns to indices in the bishop attack table.
+     * Each entry corresponds to a square on the board.
+     */
     public static final long[] BISHOP_MAGICS = new long[] {
             0x0002020202020200L, 0x0002020202020000L, 0x0004010202000000L, 0x0004040080000000L,
             0x0001104000000000L, 0x0000821040000000L, 0x0000410410400000L, 0x0000104104104000L,
@@ -90,6 +123,10 @@ public class Attacks {
             0x0000000010020200L, 0x0000000404080200L, 0x0000040404040400L, 0x0002020202020200L
     };
 
+    /**
+     * Precomputed shift values for rook magic bitboards. Each value indicates the number of bits to shift the hashed
+     * occupancy pattern to obtain the index into the rook attack table for the corresponding square.
+     */
     public static final int[] ROOK_SHIFTS = new int[]{
             52, 53, 53, 53, 53, 53, 53, 52,
             53, 54, 54, 54, 54, 54, 54, 53,
@@ -100,6 +137,11 @@ public class Attacks {
             53, 54, 54, 54, 54, 54, 54, 53,
             53, 54, 54, 53, 53, 53, 53, 53
     };
+
+    /**
+     * Precomputed shift values for bishop magic bitboards. Each value indicates the number of bits to shift the hashed
+     * occupancy pattern to obtain the index into the bishop attack table for the corresponding square.
+     */
     public static final int[] BISHOP_SHIFTS = new int[] {
             58, 59, 59, 59, 59, 59, 59, 58,
             59, 59, 59, 59, 59, 59, 59, 59,
@@ -111,37 +153,109 @@ public class Attacks {
             58, 59, 59, 59, 59, 59, 59, 58
     };
 
+    /**
+     * Precomputed movement masks for rooks, representing the possible sliding destinations (excluding board edges)
+     * for a rook on each square, used to determine relevant occupancy bits for magic bitboard calculations.
+     */
     public static final long[] ROOK_MASKS = initMagicMask(true);
+
+    /**
+     * Precomputed movement masks for bishops, representing the possible sliding destinations (excluding board edges)
+     * for a bishop on each square, used to determine relevant occupancy bits for magic bitboard calculations.
+     */
     public static final long[] BISHOP_MASKS = initMagicMask(false);
 
+
+    /**
+     * Precomputed attack tables for rooks, mapping hashed occupancy patterns to valid attack bitboards for each square.
+     */
     public static final long[][] ROOK_ATTACKS = initMagicAttacks(true, ROOK_MAGICS, ROOK_SHIFTS);
+
+    /**
+     * Precomputed attack tables for bishops, mapping hashed occupancy patterns to valid attack bitboards for each square.
+     */
     public static final long[][] BISHOP_ATTACKS = initMagicAttacks(false, BISHOP_MAGICS, BISHOP_SHIFTS);
 
+    /**
+     * Lookup table for rook magic bitboards, containing precomputed attack sets, masks, magic numbers, and shifts
+     * for each square to facilitate fast move generation.
+     */
     public static final MagicLookup[] ROOK_MAGIC_LOOKUP = initMagicLookups(ROOK_ATTACKS, ROOK_MASKS, ROOK_MAGICS, ROOK_SHIFTS);
+
+    /**
+     * Lookup table for bishop magic bitboards, containing precomputed attack sets, masks, magic numbers, and shifts
+     * for each square to facilitate fast move generation.
+     */
     public static final MagicLookup[] BISHOP_MAGIC_LOOKUP = initMagicLookups(BISHOP_ATTACKS, BISHOP_MASKS, BISHOP_MAGICS, BISHOP_SHIFTS);
 
+    /**
+     * Calculates the attack bitboard for pawns of the specified color. For white pawns, attacks are diagonal moves
+     * to the northwest and northeast; for black pawns, attacks are to the southwest and southeast. The method
+     * accounts for board edges by excluding invalid moves (e.g., attacks wrapping from file A to H or vice versa).
+     *
+     * @param pawns   A bitboard representing the positions of pawns.
+     * @param isWhite True if calculating for white pawns, false for black pawns.
+     * @return A bitboard representing all possible attack destinations for the given pawns.
+     */
     public static long pawnAttacks(long pawns, boolean isWhite) {
         return isWhite ?
                 (Bitwise.shiftNorthWest(pawns) &~ Bits.FILE_H) | (Bitwise.shiftNorthEast(pawns) &~ Bits.FILE_A) :
                 (Bitwise.shiftSouthWest(pawns) &~ Bits.FILE_H) | (Bitwise.shiftSouthEast(pawns) &~ Bits.FILE_A);
     }
 
+    /**
+     * Retrieves the precomputed attack bitboard for a king on the specified square.
+     *
+     * @param square The board square (0-63) where the king is located.
+     * @return A bitboard representing all possible destinations for the king.
+     */
     public static long kingAttacks(int square) {
         return KING_ATTACKS[square];
     }
 
+    /**
+     * Retrieves the precomputed attack bitboard for a knight on the specified square.
+     *
+     * @param square The board square (0-63) where the knight is located.
+     * @return A bitboard representing all possible destinations for the knight.
+     */
     public static long knightAttacks(int square) {
         return KNIGHT_ATTACKS[square];
     }
 
+    /**
+     * Calculates the attack bitboard for a rook on the specified square, considering blockers (occupied squares).
+     * Uses magic bitboards to efficiently map occupancy to precomputed attack sets.
+     *
+     * @param square   The board square (0-63) where the rook is located.
+     * @param blockers A bitboard representing occupied squares that may block the rook's movement.
+     * @return A bitboard representing all possible attack destinations for the rook.
+     */
     public static long rookAttacks(int square, long blockers) {
         return sliderAttacks(square, blockers, ROOK_MAGIC_LOOKUP);
     }
 
+    /**
+     * Calculates the attack bitboard for a bishop on the specified square, considering blockers (occupied squares).
+     * Uses magic bitboards to efficiently map occupancy to precomputed attack sets.
+     *
+     * @param square   The board square (0-63) where the bishop is located.
+     * @param blockers A bitboard representing occupied squares that may block the bishop's movement.
+     * @return A bitboard representing all possible attack destinations for the bishop.
+     */
     public static long bishopAttacks(int square, long blockers) {
         return sliderAttacks(square, blockers, BISHOP_MAGIC_LOOKUP);
     }
 
+    /**
+     * Generic method to calculate attack bitboards for sliding pieces (rooks or bishops) using magic bitboard lookups.
+     * The occupancy is masked, multiplied by the magic number, and shifted to compute an index into the attack table.
+     *
+     * @param sq      The board square (0-63) where the piece is located.
+     * @param occ     A bitboard representing occupied squares that may block the piece's movement.
+     * @param lookups The magic lookup table for the piece type (rook or bishop).
+     * @return A bitboard representing all possible attack destinations for the piece.
+     */
     public static long sliderAttacks(int sq, long occ, MagicLookup[] lookups) {
         MagicLookup lookup = lookups[sq];
         occ      &= lookup.mask;
@@ -150,16 +264,14 @@ public class Attacks {
         return lookup.attacks[(int) occ];
     }
 
-    public static long[] generateWhitePawnAttacks() {
-        // TODO
-        return null;
-    }
-
-    public static long[] generateBlackPawnAttacks() {
-        // ODO
-        return null;
-    }
-
+    /**
+     * Initializes movement masks for rooks or bishops, representing the possible sliding destinations
+     * (excluding board edges) for a piece on each square. These masks are used to determine relevant
+     * occupancy bits for magic bitboard calculations.
+     *
+     * @param isOrthogonal True for rooks (orthogonal movement), false for bishops (diagonal movement).
+     * @return An array of movement masks for each square.
+     * */
     public static long[] initMagicMask(boolean isOrthogonal) {
         long[] magicMasks = new long[64];
         for (int square = 0; square < 64; square++) {
@@ -168,6 +280,15 @@ public class Attacks {
         return magicMasks;
     }
 
+    /**
+     * Initializes attack tables for rooks or bishops, mapping hashed occupancy patterns to valid attack bitboards
+     * for each square. Uses precomputed magic numbers and shifts for efficient lookup.
+     *
+     * @param isOrthogonal True for rooks, false for bishops.
+     * @param magics       Array of magic numbers for the piece type.
+     * @param shifts       Array of shift values for the piece type.
+     * @return A 2D array of attack bitboards for each square and occupancy pattern.
+     */
     public static long[][] initMagicAttacks(boolean isOrthogonal, long[] magics, int[] shifts) {
         long[][] magicAttacks = new long[64][];
 
@@ -178,6 +299,16 @@ public class Attacks {
         return magicAttacks;
     }
 
+    /**
+     * Initializes the attack table for a specific square and piece type, mapping all possible blocker
+     * configurations to their corresponding attack bitboards.
+     *
+     * @param square      The board square (0-63) for the piece.
+     * @param isOrthogonal True for rooks, false for bishops.
+     * @param magic       The magic number for hashing occupancy patterns.
+     * @param shift       The number of bits to shift the hashed occupancy.
+     * @return An array of attack bitboards for all possible blocker configurations.
+     */
     public static long[] initMagicTable(int square, boolean isOrthogonal, long magic, int shift) {
         int numBits = 64 - shift;
         int tableSize = 1 << numBits;
@@ -194,6 +325,13 @@ public class Attacks {
         return table;
     }
 
+    /**
+     * Generates all possible blocker configurations for a given movement mask, representing different
+     * occupancy patterns that may block a sliding piece's movement.
+     *
+     * @param movementMask The movement mask for the piece on a specific square.
+     * @return An array of bitboards representing all possible blocker configurations.
+     */
     public static long[] initBlockerMasks(long movementMask) {
         List<Integer> moveSquares = new ArrayList<>();
         for (int i = 0; i < 64; i++) {
@@ -214,6 +352,14 @@ public class Attacks {
         return blockerBitboards;
     }
 
+    /**
+     * Initializes the movement mask for a sliding piece on a specific square, representing the possible
+     * destinations (excluding board edges) along orthogonal or diagonal vectors.
+     *
+     * @param startSquare  The board square (0-63) where the piece is located.
+     * @param isOrthogonal True for rooks, false for bishops.
+     * @return A bitboard representing the movement mask for the piece.
+     */
     public static long initMovementMask(int startSquare, boolean isOrthogonal) {
         long movementMask = 0L;
         Set<Integer> vectors = isOrthogonal ? BoardUtils.ORTHOGONAL_MOVE_VECTORS : BoardUtils.DIAGONAL_MOVE_VECTORS;
@@ -235,6 +381,16 @@ public class Attacks {
         return movementMask;
     }
 
+    /**
+     * Initializes the attack mask for a sliding piece on a specific square, considering blockers.
+     * The mask represents all possible attack destinations along orthogonal or diagonal vectors,
+     * stopping at the first blocker in each direction.
+     *
+     * @param startSquare  The board square (0-63) where the piece is located.
+     * @param blockers     A bitboard representing occupied squares that may block the piece's movement.
+     * @param isOrthogonal True for rooks, false for bishops.
+     * @return A bitboard representing the attack destinations for the piece.
+     */
     public static long initAttackMask(int startSquare, long blockers, boolean isOrthogonal) {
 
         long attackMask = 0L;
@@ -258,6 +414,16 @@ public class Attacks {
 
     }
 
+    /**
+     * Initializes the magic lookup table for a piece type, combining attack sets, movement masks,
+     * magic numbers, and shifts for each square.
+     *
+     * @param allAttacks Array of attack tables for each square.
+     * @param masks      Array of movement masks for each square.
+     * @param magics     Array of magic numbers for each square.
+     * @param shifts     Array of shift values for each square.
+     * @return An array of MagicLookup records for fast move generation.
+     */
     public static MagicLookup[] initMagicLookups(long[][] allAttacks, long[] masks, long[] magics, int[] shifts) {
         MagicLookup[] magicLookups = new MagicLookup[64];
         for (int i = 0; i < 64; i++) {
@@ -270,6 +436,14 @@ public class Attacks {
         return magicLookups;
     }
 
+    /**
+     * Checks if a vector offset is valid for a given square, accounting for board edge constraints
+     * (e.g., preventing moves that wrap from file A to H or vice versa).
+     *
+     * @param square       The board square (0-63) to check.
+     * @param vectorOffset The movement vector to validate.
+     * @return True if the vector offset is valid for the square, false otherwise.
+     */
     private static boolean isValidVectorOffset(int square, int vectorOffset) {
         boolean isAFile = (Bits.FILE_A & 1L << square) != 0;
         boolean isHFile = (Bits.FILE_H & 1L << square) != 0;
@@ -278,6 +452,16 @@ public class Attacks {
         return (!isAFile || !isVectorAFileException) && (!isHFile || !isVectorHFileException);
     }
 
+    /**
+     * Record representing a magic bitboard lookup structure, containing the attack table, movement mask,
+     * magic number, and shift value for a specific square.
+     *
+     * @param attacks The precomputed attack bitboards for all possible occupancy patterns.
+     * @param mask    The movement mask for the square.
+     * @param magic   The magic number for hashing occupancy patterns.
+     * @param shift   The number of bits to shift the hashed occupancy.
+     * @author Utsab Dahal
+     */
     public record MagicLookup(long[] attacks, long mask, long magic, int shift) {}
 
 }

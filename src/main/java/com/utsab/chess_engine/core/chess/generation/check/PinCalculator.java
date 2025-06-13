@@ -2,7 +2,7 @@ package com.utsab.chess_engine.core.chess.generation.check;
 
 import com.utsab.chess_engine.core.chess.board.Bitwise;
 import com.utsab.chess_engine.core.chess.board.Board;
-import com.utsab.chess_engine.core.chess.generation.Attacks;
+import com.utsab.chess_engine.core.chess.generation.MagicBitboards;
 
 public class PinCalculator {
 
@@ -31,14 +31,14 @@ public class PinCalculator {
         // Calculate possible orthogonal (queen or rook) pins
         long opponentOrthogonalSliders = board.getRooks(!isWhite) | board.getQueens(!isWhite);
         if (opponentOrthogonalSliders != 0) {
-            long possibleOrthogonalPinners = Attacks.rookAttacks(kingSquare, 0) & opponentOrthogonalSliders;
+            long possibleOrthogonalPinners = MagicBitboards.rookAttacks(kingSquare, 0) & opponentOrthogonalSliders;
             calculatePins(kingSquare, friendlies, opponents, possibleOrthogonalPinners);
         }
 
         // Calculate possible diagonal (queen or bishop) pins
         long opponentDiagonalSliders = board.getBishops(!isWhite) | board.getQueens(!isWhite);
         if (opponentDiagonalSliders != 0) {
-            long possibleDiagonalPinners = Attacks.bishopAttacks(kingSquare, 0) & opponentDiagonalSliders;
+            long possibleDiagonalPinners = MagicBitboards.bishopAttacks(kingSquare, 0) & opponentDiagonalSliders;
             calculatePins(kingSquare, friendlies, opponents, possibleDiagonalPinners);
         }
 
