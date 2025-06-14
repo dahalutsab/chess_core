@@ -1,31 +1,51 @@
 package com.utsab.chess_engine.move.entity;
 
+import com.utsab.chess_engine.common.Auditable;
 import com.utsab.chess_engine.game.entity.Game;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
+/**
+ * Represents a single move in a chess game, storing move notation and move number.
+ * Extends Auditable to include lifecycle tracking fields.
+ * The board state (FEN or Zobrist key) can be derived from the game's initial FEN and prior moves.
+ *
+ * @author Utsab Dahal
+ */
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "moves")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Move {
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class Move extends Auditable {
+
+    /**
+     * Unique identifier for the move.
+     */
     @Id
-    @GeneratedValue
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    Long id;
 
-    @ManyToOne
-    private Game game;
+    /**
+     * The game to which this move belongs.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "game_id", nullable = false)
+    Game game;
 
-    private int moveNumber;
+    /**
+     * The move number (e.g., 1.0 for White's first move, 1.5 for Black's first move).
+     */
+    @Column(name = "move_number", nullable = false)
+    float moveNumber;
 
-    private String fromSquare; // e.g., "e2"
-    private String toSquare;   // e.g., "e4"
-
-    private String san;        // e.g., "Nf3", "O-O", etc.
-    private String fenAfter;   // optional
-
-    private long moveTimeMillis; // Time taken for this move
+    /**
+     * The move in standard algebraic notation (e.g., "e4", "Nf3", "O-O").
+     */
+    @Column(name = "san", nullable = false)
+    String san;
 }

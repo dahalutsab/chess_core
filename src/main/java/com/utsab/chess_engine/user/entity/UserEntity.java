@@ -1,6 +1,7 @@
 package com.utsab.chess_engine.user.entity;
 
 import com.utsab.chess_engine.common.Auditable;
+import com.utsab.chess_engine.common.entity.Player;
 import com.utsab.chess_engine.user.role.entity.Roles;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -17,10 +18,7 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name="users")
-public class UserEntity extends Auditable {
-    @Id
-    @GeneratedValue
-    private Long id;
+public class UserEntity extends Player{
 
     @Column(nullable = false, name = "full_name")
     private String fullName;

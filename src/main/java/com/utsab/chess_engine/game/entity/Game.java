@@ -1,57 +1,84 @@
 package com.utsab.chess_engine.game.entity;
 
-import com.utsab.chess_engine.bot.entity.Bots;
 import com.utsab.chess_engine.common.Auditable;
+import com.utsab.chess_engine.common.entity.Player;
 import com.utsab.chess_engine.game.entity.enums.GameResult;
-import com.utsab.chess_engine.game.entity.enums.GameType;
 import com.utsab.chess_engine.move.entity.Move;
-import com.utsab.chess_engine.user.entity.UserEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents a chess game, including metadata about players, game state, and result.
+ * Extends Auditable to include lifecycle tracking fields.
+ * Supports both player vs. bot and player vs. player scenarios, with history tracking.
+ *
+ * @author Utsab Dahal
+ */
 @EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name = "games")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class Game extends Auditable {
+
+    /**
+     * Unique identifier for the game.
+     */
     @Id
-    @GeneratedValue
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    Long id;
 
-    @ManyToOne
-    private UserEntity whitePlayer; // Can be null if bot
+    /**
+     * The player (user or bot) playing as White.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "white_player_id", nullable = false)
+    Player whitePlayer;
 
-    @ManyToOne
-    private UserEntity blackPlayer;
+    /**
+     * The player (user or bot) playing as Black.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "black_player_id", nullable = false)
+    Player blackPlayer;
 
-    @ManyToOne
-    private Bots whiteBot; // if playing against bot
+    /**
+     * The initial FEN position of the game. Defaults to the standard chess starting position.
+     */
+    @Column(name = "initial_fen", nullable = false)
+    String initialFen = "rnbqkbnr/pppppppp/5n1f/8/8/5N1F/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-    @ManyToOne
-    private Bots blackBot;
+    /**
+     * The start time of the game.
+     */
+    @Column(name = "start_time", nullable = false)
+    LocalDateTime startTime;
 
+    /**
+     * The end time of the game, if completed.
+     */
+    @Column(name = "end_time")
+    LocalDateTime endTime;
+
+    /**
+     * The result of the game (e.g., WHITE_WIN, BLACK_WIN, DRAW, IN_PROGRESS).
+     */
+    @Column(name = "result", nullable = false)
     @Enumerated(EnumType.STRING)
-    private GameType gameType;
+    GameResult result = GameResult.IN_PROGRESS;
 
-    @Enumerated(EnumType.STRING)
-    private GameResult result;
-
-    private String finalFEN;
-
-    private int totalMoves;
-
-    private long durationMillis;
-
-    private boolean isRated = false;
-
-    @OneToMany(mappedBy = "game", cascade = CascadeType.ALL)
-    private List<Move> moves = new ArrayList<>();
+    /**
+     * The list of moves played in the game, ordered by move number.
+     */
+    @OneToMany(mappedBy = "game", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("moveNumber ASC")
+    List<Move> moves = new ArrayList<>();
 }

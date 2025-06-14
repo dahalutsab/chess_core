@@ -1,6 +1,7 @@
 package com.utsab.chess_engine.bot.entity;
 
 import com.utsab.chess_engine.common.Auditable;
+import com.utsab.chess_engine.common.entity.Player;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -12,10 +13,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Data
 @Builder
-public class Bots extends Auditable {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long botId;
+public class Bots extends Player {
 
     private String botName;
 

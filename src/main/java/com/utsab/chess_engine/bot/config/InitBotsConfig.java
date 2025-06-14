@@ -18,7 +18,7 @@ public class InitBotsConfig {
     @PostConstruct
     public void initBots() {
         List<Bots> bots = Arrays.asList(
-                new Bots(null, "BlunderBot", "Makes moves that are, well, questionable at best.",
+                new Bots("BlunderBot", "Makes moves that are, well, questionable at best.",
                         "An overconfident beginner who thinks every move is genius.",
                         "/bots/images/BlunderBot.jpg", "blunderbot",
                         2,
@@ -30,7 +30,7 @@ public class InitBotsConfig {
                         ),
                         400
                 ),
-                new Bots(null, "Knightmare", "A play on \"nightmare,\" this bot's tactics can be unexpectedly tricky.",
+                new Bots("Knightmare", "A play on \"nightmare,\" this bot's tactics can be unexpectedly tricky.",
                         "Loves L-shaped moves and confusing opponents.",
                         "/bots/images/Knightmare.jpg", "knightmare",
                         4,
@@ -41,7 +41,7 @@ public class InitBotsConfig {
                         ),
                         600
                 ),
-                new Bots(null, "Pawn Star", "Thinks it's the star of the show, but still learning the ropes.",
+                new Bots("Pawn Star", "Thinks it's the star of the show, but still learning the ropes.",
                         "Aspiring celebrity with a flair for the dramatic.",
                         "/bots/images/PawnStar.jpg", "pawn-star",
                         6,
@@ -52,7 +52,7 @@ public class InitBotsConfig {
                         ),
                         800
                 ),
-                new Bots(null, "Rookie Mistake", "Occasionally makes rookie mistakes, but shows potential.",
+                new Bots("Rookie Mistake", "Occasionally makes rookie mistakes, but shows potential.",
                         "Eager learner who sometimes trips over their own pieces.",
                         "/bots/images/RookieMistake.jpg", "rookie-mistake",
                         8,
@@ -63,7 +63,7 @@ public class InitBotsConfig {
                         ),
                         1000
                 ),
-                new Bots(null, "Queen Bee", "Commands the board with flair and a touch of sass.",
+                new Bots("Queen Bee", "Commands the board with flair and a touch of sass.",
                         "Regal and sassy, ruling the board with style.",
                         "/bots/images/QueenBee.jpg", "queen-bee",
                         10,
@@ -74,7 +74,7 @@ public class InitBotsConfig {
                         ),
                         1200
                 ),
-                new Bots(null, "Kingpin", "The top boss—strategic, calculated, and formidable.",
+                new Bots("Kingpin", "The top boss—strategic, calculated, and formidable.",
                         "Mastermind with a penchant for control.",
                         "/bots/images/Kingpin.jpg", "kingpin",
                         12,

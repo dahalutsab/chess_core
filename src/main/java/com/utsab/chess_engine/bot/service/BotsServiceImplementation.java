@@ -43,7 +43,7 @@ public class BotsServiceImplementation implements BotsService {
         bot.setTrashTalks(botsRequest.getTrashTalks());
         bot.setEloRating(botsRequest.getEloRating());
         Bots savedBot = botRepository.save(bot);
-        log.info("Bot saved with ID: {}", savedBot.getBotId());
+        log.info("Bot saved with ID: {}", savedBot.getId());
         return new BotsResponse(savedBot);
     }
 
@@ -82,7 +82,7 @@ public class BotsServiceImplementation implements BotsService {
         existingBot.setEloRating(botsRequest.getEloRating());
 
         Bots updatedBot = botRepository.save(existingBot);
-        log.info("Bot updated with ID: {}", updatedBot.getBotId());
+        log.info("Bot updated with ID: {}", updatedBot.getId());
         return new BotsResponse(updatedBot);
     }
 

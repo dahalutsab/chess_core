@@ -13,7 +13,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Entrypoint for the UChess chess engine. UChess communicates using the Universal Chess Interface protocol (UCI).
+ * Entrypoint for the UChess chess core engine. UChess communicates using the Universal Chess Interface protocol (UCI).
  * This adapter acts as a UCI interface which translates the incoming commands to instructions for the {@link Engine},
  * which is responsible for actually playing the game of chess.
  *
