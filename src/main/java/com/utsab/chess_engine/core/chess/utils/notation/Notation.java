@@ -33,7 +33,7 @@ public class Notation {
 
     /**
      * Converts a UCI combined algebraic notation string (e.g., "e2e4" or "a7a8q") into a {@link Move} object.
-     * Supports promotion moves by including the promotion piece type (e.g., "q" for queen).
+     * Supports promotion moveEntities by including the promotion piece type (e.g., "q" for queen).
      *
      * @param notation the UCI notation string (e.g., "e2e4" or "a7a8q")
      * @return a new {@link Move} instance representing the parsed move
@@ -57,6 +57,10 @@ public class Notation {
         }
         return new Move(startSquare, endSquare, flag);
     }
+
+
+    //from san notation
+
 
     /**
      * Converts a {@link Move} object to its UCI algebraic notation representation.

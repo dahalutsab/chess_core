@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
- * Generates all legal moves for a given chess position represented by a Bitboard.
+ * Generates all legal moveEntities for a given chess position represented by a Bitboard.
  * Supports all chess rules including pawn promotion, en passant, and castling.
  */
 public class MoveGenerator {
@@ -52,14 +52,14 @@ public class MoveGenerator {
             bitboard.undoMove(info);
         }
 
-        logger.info("Generated " + legalMoves.size() + " legal moves for " + (white ? "White" : "Black"));
+        logger.info("Generated " + legalMoves.size() + " legal moveEntities for " + (white ? "White" : "Black"));
         return legalMoves;
     }
 
 
     private void generatePawnMoves(List<Move> moves, boolean white) {
         long pawns = bitboard.getPieceBitboard(white ? 0 : 6);
-        if (pawns == 0) return; // No pawns, no moves
+        if (pawns == 0) return; // No pawns, no moveEntities
         long empty = ~bitboard.getOccupied();
         long targets = white ? bitboard.getBlackPieces() : bitboard.getWhitePieces();
         int direction = white ? 8 : -8;

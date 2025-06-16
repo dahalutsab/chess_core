@@ -24,7 +24,7 @@ public class Core {
 
     public static final Engine ENGINE = EngineInitializer.loadEngine();
     static final Scanner SCANNER = new Scanner(System.in);
-    static final String[] POSITION_LABELS = new String[]{"position", "fen", "moves"};
+    static final String[] POSITION_LABELS = new String[]{"position", "fen", "moveEntities"};
     static final String[] GO_LABELS = new String[]{"go", "movetime", "wtime", "btime", "winc", "binc", "movestogo"};
     static final String[] SETOPTION_LABELS = new String[]{"setoption", "name", "value"};
 
@@ -103,14 +103,14 @@ public class Core {
             return;
         }
         List<Move> moves = new ArrayList<>();
-        if (command.contains("moves")) {
-            String moveString = getLabelString(command, "moves", POSITION_LABELS, "");
+        if (command.contains("moveEntities")) {
+            String moveString = getLabelString(command, "moveEntities", POSITION_LABELS, "");
             if (!moveString.isBlank()) {
                 moves.addAll(new ArrayList<>(Arrays.stream(moveString.split(" "))
                         .map(Notation::fromCombinedNotation)
                         .toList()));
             } else {
-                write("Invalid position command, 'moves' has no content.");
+                write("Invalid position command, 'moveEntities' has no content.");
                 return;
             }
         }

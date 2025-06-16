@@ -12,18 +12,18 @@ import java.util.Set;
  * Utility class for generating and using magic bitboards for efficient move generation of sliding pieces (rooks and bishops)
  * in a chess engine. This class provides precomputed attack tables, magic numbers, and methods to calculate attack and movement
  * masks for rooks, bishops, knights, kings, and pawns. It leverages magic bitboards to optimize legal move generation by
- * reducing the computational overhead of calculating sliding piece moves during gameplay.
+ * reducing the computational overhead of calculating sliding piece moveEntities during gameplay.
  * <p>
  * The class includes:
  * <ul>
  *   <li>Precomputed attack tables for knights and kings, stored as bitboards for each square.</li>
- *   <li>Magic bitboard tables and lookup structures for rooks and bishops to handle sliding moves efficiently.</li>
+ *   <li>Magic bitboard tables and lookup structures for rooks and bishops to handle sliding moveEntities efficiently.</li>
  *   <li>Methods for generating pawn attacks, movement masks, and attack masks for all piece types.</li>
  *   <li>Utility methods for initializing magic lookup tables used in move generation.</li>
  * </ul>
  * <p>
  * Magic bitboards use a hashing technique to map occupancy patterns to precomputed attack sets, enabling fast lookup of valid
- * moves for sliding pieces. This implementation ensures compatibility with the UCI protocol and existing chess engine logic.
+ * moveEntities for sliding pieces. This implementation ensures compatibility with the UCI protocol and existing chess engine logic.
  *
  * @author Utsab Dahal
  * @version 1.0
@@ -189,9 +189,9 @@ public class MagicBitboards {
     public static final MagicLookup[] BISHOP_MAGIC_LOOKUP = initMagicLookups(BISHOP_ATTACKS, BISHOP_MASKS, BISHOP_MAGICS, BISHOP_SHIFTS);
 
     /**
-     * Calculates the attack bitboard for pawns of the specified color. For white pawns, attacks are diagonal moves
+     * Calculates the attack bitboard for pawns of the specified color. For white pawns, attacks are diagonal moveEntities
      * to the northwest and northeast; for black pawns, attacks are to the southwest and southeast. The method
-     * accounts for board edges by excluding invalid moves (e.g., attacks wrapping from file A to H or vice versa).
+     * accounts for board edges by excluding invalid moveEntities (e.g., attacks wrapping from file A to H or vice versa).
      *
      * @param pawns   A bitboard representing the positions of pawns.
      * @param isWhite True if calculating for white pawns, false for black pawns.
@@ -438,7 +438,7 @@ public class MagicBitboards {
 
     /**
      * Checks if a vector offset is valid for a given square, accounting for board edge constraints
-     * (e.g., preventing moves that wrap from file A to H or vice versa).
+     * (e.g., preventing moveEntities that wrap from file A to H or vice versa).
      *
      * @param square       The board square (0-63) to check.
      * @param vectorOffset The movement vector to validate.

@@ -27,13 +27,13 @@ public class RandomMoveGenerator {
      * Selects a random legal move from the current position.
      *
      * @param board the current chess position
-     * @return a random Move, or null if no legal moves exist
+     * @return a random MoveEntity, or null if no legal moveEntities exist
      */
     public Move findRandomMove(Bitboard board) {
         List<Move> moves = moveGenerator.generateMoves();
-        logger.info("All moves: " + moves);
+        logger.info("All moveEntities: " + moves);
         if (moves.isEmpty()) {
-            logger.info("No legal moves available.");
+            logger.info("No legal moveEntities available.");
             return null;
         }
         Move move = moves.get(random.nextInt(moves.size()));

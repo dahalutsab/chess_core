@@ -10,7 +10,7 @@ import com.utsab.chess_engine.core.chess.board.Move;
  * The value encoding structure is:
  * <ul>
  *     <li>Bits 32-63: Score (-1,000,000 to 1,000,000, including checkmate scores)</li>
- *     <li>Bits 16-31: Move (16-bit move encoding, see {@link Move})</li>
+ *     <li>Bits 16-31: MoveEntity (16-bit move encoding, see {@link Move})</li>
  *     <li>Bits 12-15: Flag (0-2 for {@link HashFlag} values, plus padding)</li>
  *     <li>Bits 0-11: Depth (0-265, max depth 256)</li>
  * </ul>

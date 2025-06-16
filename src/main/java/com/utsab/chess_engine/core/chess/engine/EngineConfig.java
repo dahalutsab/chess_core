@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * Holds configuration settings for the chess engine, including thread counts, transposition table sizes, search parameters,
@@ -19,7 +21,13 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Configuration
 public class EngineConfig {
+
+    @Bean
+    public Engine engine() {
+        return EngineInitializer.loadEngine();
+    }
 
     /**
      * The minimum number of threads the engine can use for parallel search.
@@ -57,7 +65,7 @@ public class EngineConfig {
     boolean ownBookEnabled;
 
     /**
-     * The maximum number of moves to consider from the opening book.
+     * The maximum number of moveEntities to consider from the opening book.
      */
     int maxBookMoves;
 
@@ -87,7 +95,7 @@ public class EngineConfig {
     int maxDepth;
 
     /**
-     * The maximum number of possible moves in a position, used for array sizing.
+     * The maximum number of possible moveEntities in a position, used for array sizing.
      */
     int maxPossibleMoves = 250;
 
@@ -132,7 +140,7 @@ public class EngineConfig {
     float lmrDivisor;
 
     /**
-     * The minimum number of moves searched before applying late move reductions.
+     * The minimum number of moveEntities searched before applying late move reductions.
      */
     int lmrMinSearchedMoves;
 
@@ -162,7 +170,7 @@ public class EngineConfig {
     int dpMargin;
 
     /**
-     * The table of late move reduction values, indexed by depth and moves searched.
+     * The table of late move reduction values, indexed by depth and moveEntities searched.
      */
     int[][] lmrReductions;
 
@@ -305,7 +313,7 @@ public class EngineConfig {
     }
 
     /**
-     * Calculates the late move reduction (LMR) table based on depth and moves searched, using a logarithmic formula.
+     * Calculates the late move reduction (LMR) table based on depth and moveEntities searched, using a logarithmic formula.
      */
     private void calculateLmrReductions() {
         // Credit to Lynx (https://github.com/lynx-chess/Lynx) for this formula for determining the optimal late move reduction depth

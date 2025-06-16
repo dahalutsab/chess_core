@@ -75,4 +75,15 @@ public enum Piece {
             default -> false;
         };
     }
+
+    public char[] getFenSymbol(long whitePawns, long blackPawns, int square) {
+        return switch (this) {
+            case PAWN -> (whitePawns & (1L << square)) != 0 ? new char[]{'P'} : new char[]{'p'};
+            case KNIGHT -> (whitePawns & (1L << square)) != 0 ? new char[]{'N'} : new char[]{'n'};
+            case BISHOP -> (whitePawns & (1L << square)) != 0 ? new char[]{'B'} : new char[]{'b'};
+            case ROOK -> (whitePawns & (1L << square)) != 0 ? new char[]{'R'} : new char[]{'r'};
+            case QUEEN -> (whitePawns & (1L << square)) != 0 ? new char[]{'Q'} : new char[]{'q'};
+            case KING -> (whitePawns & (1L << square)) != 0 ? new char[]{'K'} : new char[]{'k'};
+        };
+    }
 }

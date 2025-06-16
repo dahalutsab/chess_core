@@ -24,7 +24,7 @@ import java.util.stream.IntStream;
 /**
  * Manages the core functionality of a UCI-compatible chess engine. This class handles game state, board updates, move
  * generation, and search for the best move. It supports time-controlled games, pondering, and integration with an opening
- * book for early game moves.
+ * book for early game moveEntities.
  *
  * @author Utsab Dahal
  * @version 1.0
@@ -45,7 +45,7 @@ public class Engine {
      * Constructs an Engine instance with the specified configuration, opening book, move generator, and search mechanism.
      *
      * @param config        the engine configuration settings
-     * @param book          the opening book for early game moves
+     * @param book          the opening book for early game moveEntities
      * @param moveGenerator the move generation component
      * @param searcher      the search algorithm component
      */
@@ -65,11 +65,11 @@ public class Engine {
     }
 
     /**
-     * Sets the board position using a FEN string and applies a list of moves. Validates each move for legality before
+     * Sets the board position using a FEN string and applies a list of moveEntities. Validates each move for legality before
      * applying it to the board.
      *
      * @param fen   the FEN string representing the board position
-     * @param moves the list of moves to apply
+     * @param moves the list of moveEntities to apply
      * @throws IllegalArgumentException if any move is illegal
      */
     public void setPosition(String fen, List<Move> moves) {
@@ -242,7 +242,7 @@ public class Engine {
     /**
      * Extracts the principal variation (PV) from the transposition table, up to a maximum depth of 12.
      *
-     * @return the list of moves in the principal variation
+     * @return the list of moveEntities in the principal variation
      */
     public List<Move> extractPrincipalVariation() {
         List<Move> principalVariation = new ArrayList<>();
@@ -274,7 +274,7 @@ public class Engine {
     }
 
     /**
-     * Retrieves a legal move matching the provided move from the list of generated moves.
+     * Retrieves a legal move matching the provided move from the list of generated moveEntities.
      *
      * @param move the move to validate
      * @return the matching legal move

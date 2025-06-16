@@ -15,10 +15,10 @@ import java.util.List;
  *  2. Queen promotions
  *  3. Winning captures (sub-ordered using MVV-LVA)
  *  4. Equal captures (sub-ordered using MVV-LVA)
- *  5. Killer moves
+ *  5. Killer moveEntities
  *  6. Losing captures (sub-ordered using MVV-LVA)
  *  7. Under-promotions
- *  8. History moves
+ *  8. History moveEntities
  *  9. Everything else.
  */
 public class MoveOrderer implements MoveOrdering {
@@ -49,29 +49,29 @@ public class MoveOrderer implements MoveOrdering {
     private final int[][][] historyMoves = new int[2][64][64];
 
     /**
-     * Orders the given list of moves based on the defined move-ordering strategy.
+     * Orders the given list of moveEntities based on the defined move-ordering strategy.
      *
      * @param board The current board state.
-     * @param moves The list of moves to be ordered.
+     * @param moves The list of moveEntities to be ordered.
      * @param previousBestMove The best move found at an earlier ply.
-     * @param includeKillers Whether to include killer moves in the ordering.
+     * @param includeKillers Whether to include killer moveEntities in the ordering.
      * @param depth The current search depth.
-     * @return The ordered list of moves.
+     * @return The ordered list of moveEntities.
      */
     public List<Move> orderMoves(Board board, List<Move> moves, Move previousBestMove, boolean includeKillers, int depth) {
         List<Move> orderedMoves = new ArrayList<>(moves);
-        // Sort moves based on their scores in descending order
+        // Sort moveEntities based on their scores in descending order
         orderedMoves.sort(Comparator.comparingInt(move -> -scoreMove(board, move, previousBestMove, includeKillers, depth)));
         return orderedMoves;
     }
 
     /**
-     * Scores a move based on various heuristics such as previous best move, MVV-LVA, killer moves, and history moves.
+     * Scores a move based on various heuristics such as previous best move, MVV-LVA, killer moveEntities, and history moveEntities.
      *
      * @param board The current board state.
      * @param move The move to be scored.
      * @param previousBestMove The best move found at an earlier ply.
-     * @param includeKillers Whether to include killer moves in the scoring.
+     * @param includeKillers Whether to include killer moveEntities in the scoring.
      * @param depth The current search depth.
      * @return The score of the move.
      */

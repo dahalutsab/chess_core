@@ -11,7 +11,7 @@ import java.util.Deque;
 /**
  * Represents the current state of a chessboard, including piece positions, side to move, en passant rights,
  * castling rights, fifty-move counter, and move history. Uses bitboards for efficient piece representation
- * and provides methods to make and unmake moves, essential for search and evaluation in a UCI-compatible
+ * and provides methods to make and unmake moveEntities, essential for search and evaluation in a UCI-compatible
  * chess engine.
  *
  * @version 1.0
@@ -60,7 +60,7 @@ public class Board {
 
     /**
      * Updates the board state by applying the specified move, toggling piece bitboards and updating game state
-     * (e.g., Zobrist keys, castling rights, en passant file). Handles special moves like pawn double moves,
+     * (e.g., Zobrist keys, castling rights, en passant file). Handles special moveEntities like pawn double moveEntities,
      * castling, promotions, and en passant captures.
      *
      * @param move the move to apply

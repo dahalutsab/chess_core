@@ -4,16 +4,18 @@ import com.utsab.chess_engine.core.chess.board.*;
 import com.utsab.chess_engine.core.chess.generation.check.PinCalculator;
 import com.utsab.chess_engine.core.chess.generation.check.PinCalculator.PinData;
 import com.utsab.chess_engine.core.chess.generation.check.RayCalculator;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Generates all the legal moves in a given position.
+ * Generates all the legal moveEntities in a given position.
  * Using a hybrid of pseudo-legal and legal move generation: first we calculate the bitboards for checking pieces and
- * pinned pieces. If there is a check, we filter out all moves that do not resolve the check. Finally, we filter out all
- * moves that leave the king in (a new) check.
+ * pinned pieces. If there is a check, we filter out all moveEntities that do not resolve the check. Finally, we filter out all
+ * moveEntities that leave the king in (a new) check.
  */
+@Component
 public class MoveGenerator implements MoveGeneration {
 
     private final PinCalculator pinCalculator = new PinCalculator();
@@ -29,10 +31,10 @@ public class MoveGenerator implements MoveGeneration {
     private List<Move> legalMoves;
 
     /**
-     * Generates all legal moves for the current board position.
+     * Generates all legal moveEntities for the current board position.
      *
      * @param board The current board state.
-     * @return A list of all legal moves.
+     * @return A list of all legal moveEntities.
      */
     @Override
     public List<Move> generateMoves(Board board) {
@@ -40,11 +42,11 @@ public class MoveGenerator implements MoveGeneration {
     }
 
     /**
-     * Generates legal moves for the current board position based on the provided filter.
+     * Generates legal moveEntities for the current board position based on the provided filter.
      *
      * @param board  The current board state.
      * @param filter The filter to apply to move generation.
-     * @return A list of legal moves filtered according to the given criteria.
+     * @return A list of legal moveEntities filtered according to the given criteria.
      */
     @Override
     public List<Move> generateMoves(Board board, MoveFilter filter) {
@@ -66,11 +68,11 @@ public class MoveGenerator implements MoveGeneration {
 
         legalMoves = new ArrayList<>();
 
-        // Generate king moves first
+        // Generate king moveEntities first
         generateKingMoves(board);
 
         if (checkersCount == 2) {
-            // If we are in double-check, the only legal moves are king moves
+            // If we are in double-check, the only legal moveEntities are king moveEntities
             return legalMoves;
         }
 
@@ -84,12 +86,12 @@ public class MoveGenerator implements MoveGeneration {
                 pushMask = rayCalculator.rayBetween(checkerSquare, kingSquare);
             } else {
                 // If the piece is not a slider, we can only evade check by capturing it
-                // Therefore all non-capture 'push' moves are illegal.
+                // Therefore all non-capture 'push' moveEntities are illegal.
                 pushMask = Bits.NO_SQUARES;
             }
         }
 
-        // Generate all the other legal moves using the capture and push masks
+        // Generate all the other legal moveEntities using the capture and push masks
         generatePawnMoves(board);
         generateKnightMoves(board);
         generateAllSlidingMoves(board);
@@ -243,10 +245,10 @@ public class MoveGenerator implements MoveGeneration {
             filterMask = opponents | MagicBitboards.knightAttacks(opponentKing);
         }
 
-        // Exclude pinned knights from generating moves
+        // Exclude pinned knights from generating moveEntities
         long unpinnedKnights = knights & ~pinMask;
 
-        // Generate legal knight moves
+        // Generate legal knight moveEntities
         while (unpinnedKnights != 0) {
             int startSquare = BitwiseOperations.getNextBit(unpinnedKnights);
             long possibleMoves = getKnightAttacks(board, startSquare, isWhite) & (pushMask | captureMask) & filterMask;
@@ -272,7 +274,7 @@ public class MoveGenerator implements MoveGeneration {
         board.toggleSquare(Piece.KING, isWhite, startSquare);
         board.recalculatePieces();
 
-        // Generate legal king moves
+        // Generate legal king moveEntities
         while (kingMoves != 0) {
             int endSquare = BitwiseOperations.getNextBit(kingMoves);
             // Check if the end square is not attacked by the opponent

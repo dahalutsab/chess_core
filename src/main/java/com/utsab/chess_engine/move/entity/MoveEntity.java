@@ -9,7 +9,7 @@ import lombok.experimental.FieldDefaults;
 /**
  * Represents a single move in a chess game, storing move notation and move number.
  * Extends Auditable to include lifecycle tracking fields.
- * The board state (FEN or Zobrist key) can be derived from the game's initial FEN and prior moves.
+ * The board state (FEN or Zobrist key) can be derived from the game's initial FEN and prior moveEntities.
  *
  * @author Utsab Dahal
  */
@@ -21,7 +21,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Move extends Auditable {
+public class MoveEntity extends Auditable {
 
     /**
      * Unique identifier for the move.
@@ -46,6 +46,6 @@ public class Move extends Auditable {
     /**
      * The move in standard algebraic notation (e.g., "e4", "Nf3", "O-O").
      */
-    @Column(name = "san", nullable = false)
-    String san;
+    @Column(name = "uci", nullable = false)
+    String uci;
 }

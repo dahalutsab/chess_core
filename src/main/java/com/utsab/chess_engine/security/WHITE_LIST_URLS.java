@@ -9,7 +9,7 @@ public enum WHITE_LIST_URLS {
     SWAGGER("/v1/**", new HttpMethod[]{HttpMethod.GET}),
     BOTS("/api/v1/bots/**", new HttpMethod[]{HttpMethod.GET}),
     FILES("/files/**", new HttpMethod[]{HttpMethod.GET}),
-    MINIMAX("/api/v1/minimax/**", new HttpMethod[]{HttpMethod.GET, HttpMethod.POST}),;
+    MINIMAX("/api/v1/**", new HttpMethod[]{HttpMethod.GET, HttpMethod.POST}),;
 
     private final String url;
     private final HttpMethod[] methods;

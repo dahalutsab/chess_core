@@ -136,7 +136,7 @@ public class Bitboard {
                            int prevHalfMoveClock, long prevZobristHash, int promotionPieceIndex) {}
 
     /**
-     * Makes a move on the board, updating all state including special moves.
+     * Makes a move on the board, updating all state including special moveEntities.
      *
      * @param move the move to make
      * @return MoveInfo for undoing the move
@@ -159,7 +159,7 @@ public class Bitboard {
             zobristHash ^= ZOBRIST_PIECE_KEYS[movingPieceIndex][from];
         }
 
-        // Handle pawn moves
+        // Handle pawn moveEntities
         boolean isPawnMove = (movingPieceIndex == 0 || movingPieceIndex == 6);
         if (isPawnMove) {
             halfMoveClock = 0;
@@ -215,7 +215,7 @@ public class Bitboard {
             }
         }
 
-        // Move piece (if not promotion)
+        // MoveEntity piece (if not promotion)
         if (promotionPieceIndex == -1) {
             pieceBitboards[movingPieceIndex] &= ~(1L << from);
             pieceBitboards[movingPieceIndex] |= (1L << to);

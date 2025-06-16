@@ -18,7 +18,7 @@ public class InitBotsConfig {
     @PostConstruct
     public void initBots() {
         List<Bots> bots = Arrays.asList(
-                new Bots("BlunderBot", "Makes moves that are, well, questionable at best.",
+                new Bots("BlunderBot", "Makes moveEntities that are, well, questionable at best.",
                         "An overconfident beginner who thinks every move is genius.",
                         "/bots/images/BlunderBot.jpg", "blunderbot",
                         2,
@@ -31,7 +31,7 @@ public class InitBotsConfig {
                         400
                 ),
                 new Bots("Knightmare", "A play on \"nightmare,\" this bot's tactics can be unexpectedly tricky.",
-                        "Loves L-shaped moves and confusing opponents.",
+                        "Loves L-shaped moveEntities and confusing opponents.",
                         "/bots/images/Knightmare.jpg", "knightmare",
                         4,
                         Arrays.asList(
@@ -69,7 +69,7 @@ public class InitBotsConfig {
                         10,
                         Arrays.asList(
                                 "Bow before your queen!",
-                                "I make moves and take names.",
+                                "I make moveEntities and take names.",
                                 "You're just a pawn in my game."
                         ),
                         1200
@@ -80,7 +80,7 @@ public class InitBotsConfig {
                         12,
                         Arrays.asList(
                                 "You're playing checkers; I'm playing chess.",
-                                "Every piece moves at my command.",
+                                "Every piece moveEntities at my command.",
                                 "This board is my empire."
                         ),
                         1400

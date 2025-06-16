@@ -9,9 +9,9 @@ import com.utsab.chess_engine.core.chess.utils.BoardUtils;
 import java.util.List;
 
 /**
- * A utility class for converting chess moves into Standard Algebraic Notation (SAN), a human-readable
- * format for representing chess moves (e.g., "Nf3", "Qxe5+"). This implementation ensures accurate
- * conversion by evaluating moves before they are applied施
+ * A utility class for converting chess moveEntities into Standard Algebraic Notation (SAN), a human-readable
+ * format for representing chess moveEntities (e.g., "Nf3", "Qxe5+"). This implementation ensures accurate
+ * conversion by evaluating moveEntities before they are applied施
 
  System: Applied to the board, maintaining compatibility with UCI protocols.
 
@@ -49,7 +49,7 @@ public class SAN {
         Piece pieceType = board.pieceAt(move.getStartSquare());
         Piece capturedPieceType = board.pieceAt(move.getEndSquare());
 
-        // Handle castling moves
+        // Handle castling moveEntities
         if (move.isCastling()) {
             int delta = move.getEndSquare() - move.getStartSquare();
             return delta == 2 ? "O-O" : "O-O-O";
@@ -62,7 +62,7 @@ public class SAN {
             notation += Notation.PIECE_NOTATION_MAP.get(pieceType).toUpperCase();
         }
 
-        // Check for ambiguity in piece moves
+        // Check for ambiguity in piece moveEntities
         if (pieceType != Piece.PAWN && pieceType != Piece.KING) {
             List<Move> legalMoves = moveGenerator.generateMoves(board);
 

@@ -20,7 +20,7 @@ public enum HashFlag {
     /**
      * Indicates that the stored score is a lower bound. The position resulted in a beta-cutoff for the opponent,
      * meaning they discarded the move leading to this position because it was worse than other options. The score
-     * represents the minimum evaluation possible, but better moves may exist.
+     * represents the minimum evaluation possible, but better moveEntities may exist.
      */
     LOWER,
 

@@ -44,7 +44,7 @@ public class GameState {
     private int castlingRights = Bits.INITIAL_CASTLING_RIGHTS;
 
     /**
-     * Number of half-moves since the last capture or pawn move, for the fifty-move rule.
+     * Number of half-moveEntities since the last capture or pawn move, for the fifty-move rule.
      */
     private int fiftyMoveCounter = 0;
 

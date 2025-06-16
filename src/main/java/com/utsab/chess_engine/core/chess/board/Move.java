@@ -7,7 +7,7 @@ import java.util.Optional;
 
 /**
  * Represents a chess move, encoded as a 16-bit integer containing start square, end square, and special move flags.
- * Supports standard moves, promotions, castling, en passant, and pawn double moves, compatible with UCI protocols.
+ * Supports standard moveEntities, promotions, castling, en passant, and pawn double moveEntities, compatible with UCI protocols.
  * <p>
  * The encoding structure is:
  * <ul>
@@ -37,12 +37,12 @@ public class Move {
     public static final short EN_PASSANT_FLAG = 0b0001;
 
     /**
-     * Special move flag for castling moves.
+     * Special move flag for castling moveEntities.
      */
     public static final short CASTLE_FLAG = 0b0010;
 
     /**
-     * Special move flag for pawn double moves.
+     * Special move flag for pawn double moveEntities.
      */
     public static final short PAWN_DOUBLE_MOVE_FLAG = 0b0011;
 
@@ -200,7 +200,7 @@ public class Move {
      * Checks if this move matches another move, considering start/end squares and promotion type.
      *
      * @param move the move to compare against
-     * @return true if the moves match, false otherwise
+     * @return true if the moveEntities match, false otherwise
      *     */
     public boolean matches(Move move) {
         if (move == null) return false;

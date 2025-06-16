@@ -9,7 +9,7 @@ import java.util.Objects;
 
 /**
  * A transposition table that stores search results for previously evaluated chess positions, including evaluation scores,
- * best moves, search depths, and hash flags. By caching results, it reduces redundant evaluations for positions reached
+ * best moveEntities, search depths, and hash flags. By caching results, it reduces redundant evaluations for positions reached
  * via different move orders, significantly optimizing the search tree in a UCI-compatible chess engine.
  *
  * @author Utsab Dahal

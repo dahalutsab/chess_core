@@ -51,7 +51,13 @@ public class FEN {
         try {
             // Split FEN string into its components
             String[] parts = fen.split(" ");
+            if (parts.length < 4) {
+                throw new IllegalArgumentException("Invalid FEN: insufficient parts");
+            }
             String[] files = parts[0].split("/");
+            if (files.length != 8) {
+                throw new IllegalArgumentException("Invalid FEN: must have 8 ranks");
+            }
 
             // Initialize bitboards for all piece types
             long whitePawns = 0L;
@@ -78,6 +84,9 @@ public class FEN {
             // Process each rank and file to set piece bitboards
             for (int rankIndex = 0; rankIndex < rankFileHash.size(); rankIndex++) {
                 List<String> rank = rankFileHash.get(rankIndex);
+                if (rank.size() != 8) {
+                    throw new IllegalArgumentException("Invalid FEN: rank " + (8 - rankIndex) + " does not have 8 files");
+                }
                 for (int fileIndex = 0; fileIndex < rank.size(); fileIndex++) {
                     int squareIndex = BoardUtils.squareIndex(rankIndex, fileIndex);
                     String squareValue = rank.get(fileIndex);
@@ -166,18 +175,10 @@ public class FEN {
      */
     private static int parseCastlingRights(String castlingRights) {
         int castlingRightsMask = 0b0000;
-        if (castlingRights.contains("K")) {
-            castlingRightsMask |= 0b0001;
-        }
-        if (castlingRights.contains("Q")) {
-            castlingRightsMask |= 0b0010;
-        }
-        if (castlingRights.contains("k")) {
-            castlingRightsMask |= 0b0100;
-        }
-        if (castlingRights.contains("q")) {
-            castlingRightsMask |= 0b1000;
-        }
+        if (castlingRights.contains("K")) castlingRightsMask |= 0b0001;
+        if (castlingRights.contains("Q")) castlingRightsMask |= 0b0010;
+        if (castlingRights.contains("k")) castlingRightsMask |= 0b0100;
+        if (castlingRights.contains("q")) castlingRightsMask |= 0b1000;
         return castlingRightsMask;
     }
 
@@ -203,7 +204,11 @@ public class FEN {
      * @throws NumberFormatException if the counter is not a valid integer
      */
     private static int parseFiftyMoveCounter(String fiftyMoveCounter) {
-        return Character.isDigit(fiftyMoveCounter.charAt(0)) ? Integer.parseInt(fiftyMoveCounter) : 0;
+        try {
+            return Integer.parseInt(fiftyMoveCounter);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid fifty-move counter: " + fiftyMoveCounter);
+        }
     }
 
     /**
@@ -226,5 +231,81 @@ public class FEN {
             case 'P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k' -> Stream.of(square);
             default -> throw new IllegalArgumentException("Invalid square character: " + square);
         };
+    }
+
+    /**
+     * Converts a {@link Board} object into a FEN string representation.
+     *
+     * <p>This method generates a FEN string that encodes the current board state, including piece placement,
+     * active color, castling rights, en passant target square, halfmove clock, and fullmove number.
+     *
+     * @param board the {@link Board} object to convert to FEN
+     * @return a FEN string representing the board state
+     * @throws IllegalArgumentException if the board is null or invalid
+     */
+    public static String toFen(Board board) {
+        if (board == null) {
+            throw new IllegalArgumentException("Board cannot be null");
+        }
+        if (board.getGameState() == null) {
+            throw new IllegalStateException("GameState is null");
+        }
+
+        // Piece placement
+        StringBuilder piecePlacement = new StringBuilder();
+        for (int rank = 7; rank >= 0; rank--) {
+            int emptyCount = 0;
+            for (int file = 0; file < 8; file++) {
+                int square = rank * 8 + file;
+                var piece = board.getPieceList()[square];
+                if (piece == null) {
+                    emptyCount++;
+                } else {
+                    if (emptyCount > 0) {
+                        piecePlacement.append(emptyCount);
+                        emptyCount = 0;
+                    }
+                    char[] fenSymbolArray = piece.getFenSymbol(board.getWhitePawns(), board.getBlackPawns(), square);
+                    String fenSymbol = String.valueOf(fenSymbolArray);
+                    if (!fenSymbol.matches("[PNBRQKpnbrqk]")) {
+                        throw new IllegalStateException("Invalid FEN symbol: " + fenSymbol + " at square " + square);
+                    }
+                    piecePlacement.append(fenSymbol);
+                }
+            }
+            if (emptyCount > 0) {
+                piecePlacement.append(emptyCount);
+            }
+            if (rank > 0) {
+                piecePlacement.append('/');
+            }
+        }
+
+        // Active color
+        String activeColor = board.isWhiteToMove() ? "w" : "b";
+
+        // Castling rights
+        StringBuilder castling = new StringBuilder();
+        int rights = board.getGameState().getCastlingRights();
+        if ((rights & 0b0001) != 0) castling.append('K');
+        if ((rights & 0b0010) != 0) castling.append('Q');
+        if ((rights & 0b0100) != 0) castling.append('k');
+        if ((rights & 0b1000) != 0) castling.append('q');
+        if (castling.isEmpty()) castling.append('-');
+
+        // En passant target
+        int epFile = board.getGameState().getEnPassantFile();
+        String enPassant = "-";
+        if (epFile >= 0 && epFile < 8) {
+            int epRank = board.isWhiteToMove() ? 2 : 5; // Correct rank for en passant target
+            enPassant = "" + (char)('a' + epFile) + (epRank + 1);
+        }
+
+        // Halfmove clock and fullmove number
+        int halfmoveClock = board.getGameState().getFiftyMoveCounter();
+        int fullmoveNumber = 1 + board.getMoveHistory().size() / 2;
+
+        return String.format("%s %s %s %s %d %d",
+                piecePlacement, activeColor, castling, enPassant, halfmoveClock, fullmoveNumber);
     }
 }

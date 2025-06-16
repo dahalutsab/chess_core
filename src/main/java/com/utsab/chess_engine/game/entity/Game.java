@@ -3,14 +3,16 @@ package com.utsab.chess_engine.game.entity;
 import com.utsab.chess_engine.common.Auditable;
 import com.utsab.chess_engine.common.entity.Player;
 import com.utsab.chess_engine.game.entity.enums.GameResult;
-import com.utsab.chess_engine.move.entity.Move;
+import com.utsab.chess_engine.move.entity.MoveEntity;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Represents a chess game, including metadata about players, game state, and result.
@@ -34,7 +36,7 @@ public class Game extends Auditable {
      */
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    Long id;
+    UUID id;
 
     /**
      * The player (user or bot) playing as White.
@@ -76,9 +78,23 @@ public class Game extends Auditable {
     GameResult result = GameResult.IN_PROGRESS;
 
     /**
-     * The list of moves played in the game, ordered by move number.
+     * The list of moveEntities played in the game, ordered by move number.
      */
-    @OneToMany(mappedBy = "game", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("moveNumber ASC")
-    List<Move> moves = new ArrayList<>();
+    @OneToMany(mappedBy = "game", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @NotNull
+    List<MoveEntity> moveEntities = new ArrayList<>();
+
+    /**
+     * Returns the list of moves in the game, guaranteed to be non-null.
+     *
+     * @return the list of move entities
+     * @author Utsab Dahal
+     */
+    @NotNull
+    public List<MoveEntity> getMoveEntities() {
+        if (moveEntities == null) {
+            moveEntities = new ArrayList<>();
+        }
+        return moveEntities;
+    }
 }

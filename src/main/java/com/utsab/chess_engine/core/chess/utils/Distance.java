@@ -30,7 +30,7 @@ public class Distance {
     private static final int[] CENTER_MANHATTAN_DISTANCE = new int[64];
 
     /**
-     * Returns the Chebyshev distance (number of king moves) between two squares.
+     * Returns the Chebyshev distance (number of king moveEntities) between two squares.
      *
      * @param sq1 the first square index (0-63)
      * @param sq2 the second square index (0-63)
@@ -41,7 +41,7 @@ public class Distance {
     }
 
     /**
-     * Returns the Manhattan distance (sum of orthogonal moves) between two squares.
+     * Returns the Manhattan distance (sum of orthogonal moveEntities) between two squares.
      *
      * @param sq1 the first square index (0-63)
      * @param sq2 the second square index (0-63)

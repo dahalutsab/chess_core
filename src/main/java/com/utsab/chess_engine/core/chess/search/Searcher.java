@@ -206,7 +206,7 @@ public class Searcher implements Search {
         int staticEval = evaluator.evaluate(board);
 
         if (moves.isEmpty()) {
-            // If there are no legal moves, and it's check, then it's checkmate. Otherwise, it's stalemate.
+            // If there are no legal moveEntities, and it's check, then it's checkmate. Otherwise, it's stalemate.
             return isInCheck ? -Score.MATE_SCORE + ply : Score.DRAW_SCORE;
         }
         if (ply == 0 && moves.size() == 1) {
@@ -231,7 +231,7 @@ public class Searcher implements Search {
                 return staticEval - config.getRfpMargin()[depth];
             }
 
-            // If the static evaluation + some significant margin is still above beta after giving the opponent two moves
+            // If the static evaluation + some significant margin is still above beta after giving the opponent two moveEntities
             // in a row (making a 'null' move), then let's assume this position is a cut-node and will fail-high, and
             // not search any further.
             // See https://www.chessprogramming.org/Null_Move_Pruning
@@ -250,7 +250,7 @@ public class Searcher implements Search {
         }
 
         // Give each move a 'score' based on how interesting or promising it looks. These scores will be used to select
-        // the order in which moves are evaluated.
+        // the order in which moveEntities are evaluated.
         int[] scores = new int[moves.size()];
         for (int i = 0; i < moves.size(); i++) {
             scores[i] = moveOrderer.scoreMove(board, moves.get(i), previousBestMove, true, ply);
@@ -340,7 +340,7 @@ public class Searcher implements Search {
                     }
                 }
 
-                // For all other moves apart from the principal variation, search with a null window (-alpha - 1, -alpha),
+                // For all other moveEntities apart from the principal variation, search with a null window (-alpha - 1, -alpha),
                 // to try and prove the move will fail low while saving the time spent on a full search.
                 eval = -search(depth - 1 + extension - reduction, ply + 1, -alpha - 1, -alpha, true);
 
@@ -361,7 +361,7 @@ public class Searcher implements Search {
                 // This is a beta cut-off - the opponent won't let us get here as they already have better alternatives
                 transpositionTable.put(getKey(), HashFlag.LOWER, depth, ply, move, beta);
                 if (!isCapture) {
-                    // Non-captures which cause a beta cut-off are stored as 'killer' and 'history' moves for future move ordering
+                    // Non-captures which cause a beta cut-off are stored as 'killer' and 'history' moveEntities for future move ordering
                     moveOrderer.addKillerMove(ply, move);
                     moveOrderer.addHistoryMove(depth, move, board.isWhiteToMove());
                 }
@@ -412,7 +412,7 @@ public class Searcher implements Search {
 
         List<Move> moves;
         if (isInCheck) {
-            // If we are in check, we need to generate 'all' legal moves that evade check, not just captures. Otherwise,
+            // If we are in check, we need to generate 'all' legal moveEntities that evade check, not just captures. Otherwise,
             // we risk missing simple mate threats.
             moves = moveGenerator.generateMoves(board, MoveFilter.ALL);
             if (moves.isEmpty()) {

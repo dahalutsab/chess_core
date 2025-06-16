@@ -26,7 +26,7 @@ public class MinimaxAI {
         nodes = 0;
         List<Move> moves = moveGenerator.generateMoves();
         if (moves.isEmpty()) {
-            logger.info("No valid moves available.");
+            logger.info("No valid moveEntities available.");
             return new MinimaxResult(null, 0, nodes, List.of(), List.of());
         }
 
@@ -46,7 +46,7 @@ public class MinimaxAI {
             board.undoMove(moveInfo);
 
             moveList.add(new MoveScore(move, score));
-            logger.fine("Move " + move + " evaluated with score " + score);
+            logger.fine("MoveEntity " + move + " evaluated with score " + score);
 
             if (board.isWhiteToMove()) {
                 if (score > bestScore) {

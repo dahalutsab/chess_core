@@ -1,5 +1,5 @@
 server:
-  port: 8081
+  port: 8181
   address: 0.0.0.0
   host: http://localhost
   base-url: ${server.host}:${server.port}/
@@ -22,7 +22,7 @@ spring:
   jpa:
     show_sql: true
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     defer-datasource-initialization: true
     properties:
       dialect: org.hibernate.dialect.PostgreSQLDialect

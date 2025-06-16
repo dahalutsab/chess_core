@@ -5,7 +5,7 @@ package com.utsab.chess_engine.decision.board;
  */
 public record Move(int fromSquare, int toSquare) {
     /**
-     * Constructs a Move with the specified from and to squares.
+     * Constructs a MoveEntity with the specified from and to squares.
      *
      * @param fromSquare the starting square (0-63)
      * @param toSquare   the destination square (0-63)
