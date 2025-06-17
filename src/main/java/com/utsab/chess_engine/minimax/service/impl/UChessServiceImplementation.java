@@ -25,6 +25,7 @@ import com.utsab.chess_engine.move.entity.MoveEntity;
 import com.utsab.chess_engine.user.entity.UserEntity;
 import com.utsab.chess_engine.user.repository.UserInfoRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -40,6 +41,7 @@ import java.util.UUID;
  * @version 1.0
  * @since 2023-10-01
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UChessServiceImplementation implements UChessService {
@@ -78,9 +80,8 @@ public class UChessServiceImplementation implements UChessService {
         game = gameRepository.save(game);
 
         UChessResponse botMove = null;
-        // Check if bot (Black) needs to move first
-        boolean isWhiteToMove = FEN.toBoard(initialFen).isWhiteToMove();
-        if (request.playerColor() == PreferredColor.WHITE && !isWhiteToMove) {
+        // Check if bot (WHITE) needs to move first
+        if (request.playerColor() == PreferredColor.BLACK) {
             UChessRequest uChessRequest = new UChessRequest(game.getId(), null);
             botMove = getBestMove(uChessRequest);
         }
@@ -108,6 +109,15 @@ public class UChessServiceImplementation implements UChessService {
     public UChessResponse getBestMove(UChessRequest uChessRequest) {
         Game game = gameRepository.findById(uChessRequest.getGameId())
                 .orElseThrow(() -> new InvalidRequestException("Game not found: " + uChessRequest.getGameId()));
+
+        // Get the max depth from the bot if available, otherwise use a default value
+        int maxDepth = game.getBlackPlayer() instanceof Bots bot ? bot.getMaxDepth() : game.getWhitePlayer() instanceof Bots bot ? bot.getMaxDepth() : 200;
+
+        // Set the engine's max depth if the method exists
+        Core.ENGINE.getConfig().setMaxDepth(maxDepth);
+
+        //log max depth
+        log.info("Max depth set to: {}", Core.ENGINE.getConfig().getMaxDepth());
 
         List<MoveEntity> moves = new ArrayList<>(game.getMoveEntities());
         List<Move> moveList = new ArrayList<>();
