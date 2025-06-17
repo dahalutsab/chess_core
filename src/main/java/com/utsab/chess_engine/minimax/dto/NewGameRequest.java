@@ -1,0 +1,13 @@
+package com.utsab.chess_engine.minimax.dto;
+
+import com.utsab.chess_engine.game.entity.enums.GameType;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+public record NewGameRequest(
+        @NotNull GameType gameType,
+        @NotBlank Long playerId,
+        @NotBlank Long botId,
+        @NotBlank PreferredColor playerColor, // "WHITE" or "BLACK"
+        String initialFen
+) {}

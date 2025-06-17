@@ -22,6 +22,6 @@ public record GameDto(
         LocalDateTime endTime,
         GameResult result,
         List<MoveDto> moves,
-        MoveDto botMove
+        com.utsab.chess_engine.minimax.dto.UChessResponse botMove
 ) {}
 

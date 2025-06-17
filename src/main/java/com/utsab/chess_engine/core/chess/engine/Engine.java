@@ -302,4 +302,8 @@ public class Engine {
         think = CompletableFuture.supplyAsync(() -> think(thinkTimeMs));
         return think.join();
     }
+
+    public String getInitialFen() {
+        return FEN.STARTING_POSITION;
+    }
 }

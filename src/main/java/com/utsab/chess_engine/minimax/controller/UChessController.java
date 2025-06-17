@@ -1,9 +1,8 @@
 package com.utsab.chess_engine.minimax.controller;
 
-//javadoc
-
-
 import com.utsab.chess_engine.common.BaseController;
+import com.utsab.chess_engine.game.dto.GameDto;
+import com.utsab.chess_engine.minimax.dto.NewGameRequest;
 import com.utsab.chess_engine.minimax.dto.UChessRequest;
 import com.utsab.chess_engine.minimax.dto.UChessResponse;
 import com.utsab.chess_engine.minimax.service.UChessService;
@@ -22,6 +21,12 @@ import static com.utsab.chess_engine.common.constants.APIConstants.API_BASE;
 @RequiredArgsConstructor
 public class UChessController extends BaseController {
     private final UChessService uChessService;
+
+    @PostMapping("/new-game")
+    public ResponseEntity<ApiResponse<GameDto>> getBestMove(@RequestBody NewGameRequest newGameRequest) {
+        GameDto gameDto = uChessService.startNewGame(newGameRequest);
+        return successResponse(gameDto, "New game started successfully");
+    }
 
     @PostMapping
     public ResponseEntity<ApiResponse<UChessResponse>> getBestMove(@RequestBody UChessRequest uChessRequest) {

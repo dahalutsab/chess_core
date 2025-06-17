@@ -8,6 +8,7 @@ import com.utsab.chess_engine.core.chess.evaluation.Score;
 import com.utsab.chess_engine.core.chess.search.SearchResult;
 import com.utsab.chess_engine.core.chess.utils.notation.FEN;
 import com.utsab.chess_engine.core.chess.utils.notation.Notation;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
  * @see <a href="https://www.chessprogramming.org/UCI">Chess Programming Wiki</a>
  */
 //@FieldDefaults(level = AccessLevel.PRIVATE)
+@Slf4j
 public class Core {
 
     public static final Engine ENGINE = EngineInitializer.loadEngine();
@@ -114,6 +116,7 @@ public class Core {
                 return;
             }
         }
+        log.info("Setting position fen: {} and moves: {}", fen, moves);
         ENGINE.setPosition(fen, moves);
 
     }
@@ -172,7 +175,7 @@ public class Core {
         }
     }
 
-    private static void writeMove(SearchResult searchResult) {
+    public static void writeMove(SearchResult searchResult) {
         Move move = searchResult.move();
         Move ponderMove = ENGINE.extractPonderMove(move);
         boolean ponder = ENGINE.getConfig().isPonderEnabled() && ponderMove != null;
