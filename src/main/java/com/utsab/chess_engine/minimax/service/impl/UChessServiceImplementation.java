@@ -24,6 +24,7 @@ import com.utsab.chess_engine.minimax.service.UChessService;
 import com.utsab.chess_engine.move.entity.MoveEntity;
 import com.utsab.chess_engine.user.entity.UserEntity;
 import com.utsab.chess_engine.user.repository.UserInfoRepository;
+import com.utsab.chess_engine.util.logged_in_user.LoggedInUserUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -49,6 +50,7 @@ public class UChessServiceImplementation implements UChessService {
     private final GameRepository gameRepository;
     private final UserInfoRepository userRepository;
     private final BotRepository botRepository;
+    private final LoggedInUserUtil loggedInUserUtil;
 
     @Override
     public GameDto startNewGame(NewGameRequest request) {
@@ -56,8 +58,7 @@ public class UChessServiceImplementation implements UChessService {
         Core.ENGINE.newGame();
 
         // Validate request
-        UserEntity user = userRepository.findById(request.playerId())
-                .orElseThrow(() -> new InvalidRequestException("User not found: " + request.playerId()));
+        UserEntity user = loggedInUserUtil.getLoggedInUser();
         Bots bot = botRepository.findById(request.botId())
                 .orElseThrow(() -> new InvalidRequestException("Bot not found: " + request.botId()));
 
@@ -186,7 +187,6 @@ public class UChessServiceImplementation implements UChessService {
      *
      * @param totalMoves the total number of moves played in the game
      * @return the move number as a float
-     * @author Utsab Dahal
      */
     private float calculateMoveNumber(int totalMoves) {
         return totalMoves % 2 == 1 ? (totalMoves + 1) / 2.0f : totalMoves / 2.0f + 0.5f;

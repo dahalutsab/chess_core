@@ -17,18 +17,18 @@ import org.springframework.web.bind.annotation.RestController;
 import static com.utsab.chess_engine.common.constants.APIConstants.API_BASE;
 
 @RestController
-@RequestMapping(API_BASE + "/minimax")
+@RequestMapping(API_BASE + "/game")
 @RequiredArgsConstructor
 public class UChessController extends BaseController {
     private final UChessService uChessService;
 
-    @PostMapping("/new-game")
+    @PostMapping("/new")
     public ResponseEntity<ApiResponse<GameDto>> getBestMove(@RequestBody NewGameRequest newGameRequest) {
         GameDto gameDto = uChessService.startNewGame(newGameRequest);
         return successResponse(gameDto, "New game started successfully");
     }
 
-    @PostMapping
+    @PostMapping("/best-move")
     public ResponseEntity<ApiResponse<UChessResponse>> getBestMove(@RequestBody UChessRequest uChessRequest) {
         UChessResponse uChessResponse = uChessService.getBestMove(uChessRequest);
         return successResponse(uChessResponse, "Best move calculated successfully");
