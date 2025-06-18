@@ -6,10 +6,9 @@ import org.springframework.http.HttpMethod;
 @Getter
 public enum WHITE_LIST_URLS {
     AUTH("/api/v1/auth/**", new HttpMethod[]{HttpMethod.GET, HttpMethod.POST}),
-    SWAGGER("/v1/**", new HttpMethod[]{HttpMethod.GET}),
+    SWAGGER("/v1/swagger-ui/**", new HttpMethod[]{HttpMethod.GET}),
     BOTS("/api/v1/bots/**", new HttpMethod[]{HttpMethod.GET}),
-    FILES("/files/**", new HttpMethod[]{HttpMethod.GET}),
-    MINIMAX("/api/v1/**", new HttpMethod[]{HttpMethod.GET, HttpMethod.POST}),;
+    FILES("/files/**", new HttpMethod[]{HttpMethod.GET});
 
     private final String url;
     private final HttpMethod[] methods;

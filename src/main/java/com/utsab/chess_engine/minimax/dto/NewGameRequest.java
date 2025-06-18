@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 
 public record NewGameRequest(
         @NotNull GameType gameType,
-        @NotBlank Long botId,
+        @NotBlank String botSlug,
         @NotBlank PreferredColor playerColor, // "WHITE" or "BLACK"
         String initialFen
 ) {}

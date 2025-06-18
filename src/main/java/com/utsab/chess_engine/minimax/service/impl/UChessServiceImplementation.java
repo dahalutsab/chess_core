@@ -57,16 +57,24 @@ public class UChessServiceImplementation implements UChessService {
         Core.ENGINE.gameOver();
         Core.ENGINE.newGame();
 
-        // Validate request
         UserEntity user = loggedInUserUtil.getLoggedInUser();
-        Bots bot = botRepository.findById(request.botId())
-                .orElseThrow(() -> new InvalidRequestException("Bot not found: " + request.botId()));
+        Bots bot = botRepository.findBySlug(request.botSlug())
+                .orElseThrow(() -> new InvalidRequestException("Bot not found: " + request.botSlug()));
 
-        // Set up game entity
         String initialFen = Objects.requireNonNullElse(request.initialFen(), FEN.STARTING_POSITION);
 
-        Player whitePlayer = request.playerColor() == PreferredColor.WHITE ? user : bot;
-        Player blackPlayer = request.playerColor() == PreferredColor.BLACK ? user : bot;
+        Player whitePlayer;
+        Player blackPlayer;
+        PreferredColor color = request.playerColor();
+        if (color == PreferredColor.RANDOM) {
+            boolean userIsWhite = Math.random() < 0.5;
+            whitePlayer = userIsWhite ? user : bot;
+            blackPlayer = userIsWhite ? bot : user;
+            color = userIsWhite ? PreferredColor.WHITE : PreferredColor.BLACK;
+        } else {
+            whitePlayer = color == PreferredColor.WHITE ? user : bot;
+            blackPlayer = color == PreferredColor.BLACK ? user : bot;
+        }
 
         Game game = Game.builder()
                 .whitePlayer(whitePlayer)
@@ -77,17 +85,14 @@ public class UChessServiceImplementation implements UChessService {
                 .moveEntities(new ArrayList<>())
                 .build();
 
-        // Persist game
         game = gameRepository.save(game);
 
         UChessResponse botMove = null;
-        // Check if bot (WHITE) needs to move first
-        if (request.playerColor() == PreferredColor.BLACK) {
+        if (color == PreferredColor.BLACK) {
             UChessRequest uChessRequest = new UChessRequest(game.getId(), null);
             botMove = getBestMove(uChessRequest);
         }
 
-        // Build response DTO
         return new GameDto(
                 game.getId(),
                 request.gameType(),
