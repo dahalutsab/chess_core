@@ -3,6 +3,7 @@ package com.utsab.chess_engine.game.entity;
 import com.utsab.chess_engine.common.Auditable;
 import com.utsab.chess_engine.common.entity.Player;
 import com.utsab.chess_engine.game.entity.enums.GameResult;
+import com.utsab.chess_engine.game.entity.enums.GameType;
 import com.utsab.chess_engine.move.entity.MoveEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -80,9 +81,13 @@ public class Game extends Auditable {
     /**
      * The list of moveEntities played in the game, ordered by move number.
      */
-    @OneToMany(mappedBy = "game", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "game", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @NotNull
     List<MoveEntity> moveEntities = new ArrayList<>();
+
+
+    @Column @Enumerated(EnumType.STRING)
+    GameType gameType = GameType.PVB;
 
     /**
      * Returns the list of moves in the game, guaranteed to be non-null.

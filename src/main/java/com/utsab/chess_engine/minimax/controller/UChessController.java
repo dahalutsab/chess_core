@@ -9,10 +9,9 @@ import com.utsab.chess_engine.minimax.service.UChessService;
 import com.utsab.chess_engine.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 import static com.utsab.chess_engine.common.constants.APIConstants.API_BASE;
 
@@ -32,5 +31,11 @@ public class UChessController extends BaseController {
     public ResponseEntity<ApiResponse<UChessResponse>> getBestMove(@RequestBody UChessRequest uChessRequest) {
         UChessResponse uChessResponse = uChessService.getBestMove(uChessRequest);
         return successResponse(uChessResponse, "Best move calculated successfully");
+    }
+
+    @GetMapping("/{gameId}")
+    public ResponseEntity<ApiResponse<GameDto>> getGameInfo(@PathVariable UUID gameId) {
+        GameDto gameDto = uChessService.getGameInfo(gameId);
+        return successResponse(gameDto, "Game info fetched successfully");
     }
 }
