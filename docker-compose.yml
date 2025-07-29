@@ -1,0 +1,31 @@
+version: '3.9'
+
+services:
+  chess-engine:
+    build: .
+    ports:
+      - "8181:8181"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    volumes:
+      - type: bind
+        source: D:/chess_engine
+        target: /windows_chess_engine
+    depends_on:
+      - postgres
+    profiles:
+      - windows
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: chess_engine
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

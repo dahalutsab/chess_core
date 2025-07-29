@@ -30,7 +30,7 @@ spring:
 
 jwt:
   rsa-private-key: classpath:certs/private_key.pem
-  rsa-public-key: classpath:certs/public_Key.pem
+  rsa-public-key: classpath:certs/public_key.pem
 
 app:
   filepath:
@@ -53,4 +53,3 @@ springdoc:
     enabled: true
   swagger-ui:
     path: /v1/swagger
-

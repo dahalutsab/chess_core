@@ -10,6 +10,7 @@ import lombok.experimental.FieldDefaults;
  *
  * @author Utsab Dahal
  */
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "players")
 @Inheritance(strategy = InheritanceType.JOINED)

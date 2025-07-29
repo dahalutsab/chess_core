@@ -1,0 +1,55 @@
+server:
+  port: 8181
+  address: 0.0.0.0
+  host: http://localhost
+  base-url: ${server.host}:${server.port}/
+
+spring:
+  application:
+    name: chess engine
+  servlet:
+    multipart:
+      max-file-size: 8MB
+      max-request-size: 8MB
+
+  datasource:
+    url: jdbc:postgresql://postgres:5432/chess_engine
+    username: postgres
+    password: root
+    driver-class-name: org.postgresql.Driver
+
+
+  jpa:
+    show_sql: true
+    hibernate:
+      ddl-auto: update
+    defer-datasource-initialization: true
+    properties:
+      dialect: org.hibernate.dialect.PostgreSQLDialect
+
+
+jwt:
+  rsa-private-key: classpath:certs/private_key.pem
+  rsa-public-key: classpath:certs/public_key.pem
+
+app:
+  filepath:
+    windows: D:\\chess_engine\\
+    linux: /home/ubuntu/chess_engine/
+    mac: /Users/chess_engine/
+
+frontend:
+  port: 4200
+  domain: ${server.host}:${frontend.port}
+  forgot_password: /auth/reset-password
+  verify_email: /auth/verify-email
+
+otp:
+  expiryInSeconds: 300 # OTP expiry time in seconds (5 minutes)
+
+springdoc:
+  api-docs:
+    path: /v1/api-docs
+    enabled: true
+  swagger-ui:
+    path: /v1/swagger
