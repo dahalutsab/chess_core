@@ -51,7 +51,6 @@ public class Searcher implements Search {
     boolean cancelled;
 
     int currentDepth;
-    final int maxDepth = 256;
 
     Move bestMove;
     Move bestMoveCurrentDepth;
@@ -96,7 +95,7 @@ public class Searcher implements Search {
         int retryMultiplier = 0;
         SearchResult result = null;
 
-        while (!isCancelled() && currentDepth < maxDepth) {
+        while (!isCancelled() && currentDepth < config.getMaxDepth()) {
             // Reset variables for the current depth iteration
             bestMoveCurrentDepth = null;
             bestEvalCurrentDepth = 0;

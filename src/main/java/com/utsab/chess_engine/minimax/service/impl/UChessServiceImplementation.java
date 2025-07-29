@@ -142,9 +142,18 @@ public class UChessServiceImplementation implements UChessService {
         Game game = gameRepository.findById(uChessRequest.getGameId())
                 .orElseThrow(() -> new InvalidRequestException("Game not found: " + uChessRequest.getGameId()));
 
-        int maxDepth = game.getBlackPlayer() instanceof Bots bot ? bot.getMaxDepth() :
-                game.getWhitePlayer() instanceof Bots bot ? bot.getMaxDepth() : 200;
-
+        int maxDepth;
+        if ("BOT".equals(getPlayerType(game.getBlackPlayer()))) {
+            Bots bot = botRepository.findById(game.getBlackPlayer().getId())
+                    .orElseThrow(() -> new InvalidRequestException("Bot not found for player id: " + game.getBlackPlayer().getId()));
+            maxDepth = bot.getMaxDepth();
+        } else if ("BOT".equals(getPlayerType(game.getWhitePlayer()))) {
+            Bots bot = botRepository.findById(game.getWhitePlayer().getId())
+                    .orElseThrow(() -> new InvalidRequestException("Bot not found for player id: " + game.getWhitePlayer().getId()));
+            maxDepth = bot.getMaxDepth();
+        } else {
+            maxDepth = 200;
+        }
         Core.ENGINE.getConfig().setMaxDepth(maxDepth);
         log.info("Max depth set to: {}", Core.ENGINE.getConfig().getMaxDepth());
 

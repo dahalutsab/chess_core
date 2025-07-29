@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -22,6 +23,7 @@ import org.springframework.context.annotation.Configuration;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Configuration
+@Slf4j
 public class EngineConfig {
 
     @Bean
@@ -335,5 +337,11 @@ public class EngineConfig {
         int rookPhase = piecePhases[Piece.ROOK.getIndex()];
         int queenPhase = piecePhases[Piece.QUEEN.getIndex()];
         totalPhase = (knightPhase * 4) + (bishopPhase * 4) + (rookPhase * 4) + (queenPhase * 2);
+    }
+
+    public void setMaxDepth(int maxDepth) {
+        log.info("Setting maxDepth to {}", maxDepth);
+        this.maxDepth = maxDepth;
+        calculateLmrReductions(); // Recalculate lmrReductions for the new maxDepth
     }
 }
