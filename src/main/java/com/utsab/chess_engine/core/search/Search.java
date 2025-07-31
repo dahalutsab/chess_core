@@ -49,7 +49,7 @@ public interface Search {
      * @return the search result containing the best move and evaluation
      * @throws NullPointerException if duration is null
      */
-    SearchResult search(Duration duration);
+    SearchResult negamax(Duration duration);
 
     /**
      * Retrieves the transposition table used by the search.

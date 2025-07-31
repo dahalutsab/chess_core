@@ -14,27 +14,27 @@ import java.util.Deque;
  * and provides methods to make and unmake moveEntities, essential for search and evaluation in a UCI-compatible
  * chess engine.
  *
- * @version 1.0
- * @since 2025
  * @author Utsab Dahal
+ * @version 1.0
  * @see <a href="https://www.chessprogramming.org/Board_Representation">Chess Programming Wiki - Board Representation</a>
+ * @since 2025
  */
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Board {
 
-    long whitePawns = Bits.WHITE_PAWNS_START;
-    long whiteKnights = Bits.WHITE_KNIGHTS_START;
-    long whiteBishops = Bits.WHITE_BISHOPS_START;
-    long whiteRooks = Bits.WHITE_ROOKS_START;
-    long whiteQueens = Bits.WHITE_QUEENS_START;
-    long whiteKing = Bits.WHITE_KING_START;
-    long blackPawns = Bits.BLACK_PAWNS_START;
-    long blackKnights = Bits.BLACK_KNIGHTS_START;
-    long blackBishops = Bits.BLACK_BISHOPS_START;
-    long blackRooks = Bits.BLACK_ROOKS_START;
-    long blackQueens = Bits.BLACK_QUEENS_START;
-    long blackKing = Bits.BLACK_KING_START;
+    long whitePawns = BitboardConstants.WHITE_PAWNS_START;
+    long whiteKnights = BitboardConstants.WHITE_KNIGHTS_START;
+    long whiteBishops = BitboardConstants.WHITE_BISHOPS_START;
+    long whiteRooks = BitboardConstants.WHITE_ROOKS_START;
+    long whiteQueens = BitboardConstants.WHITE_QUEENS_START;
+    long whiteKing = BitboardConstants.WHITE_KING_START;
+    long blackPawns = BitboardConstants.BLACK_PAWNS_START;
+    long blackKnights = BitboardConstants.BLACK_KNIGHTS_START;
+    long blackBishops = BitboardConstants.BLACK_BISHOPS_START;
+    long blackRooks = BitboardConstants.BLACK_ROOKS_START;
+    long blackQueens = BitboardConstants.BLACK_QUEENS_START;
+    long blackKing = BitboardConstants.BLACK_KING_START;
 
     long whitePieces;
     long blackPieces;
@@ -50,8 +50,7 @@ public class Board {
 
     /**
      * Constructs a new board with the starting position, initializing Zobrist keys and piece bitboards.
-     *
-         */
+     */
     public Board() {
         gameState.setZobristKey(Zobrist.generateKey(this));
         gameState.setPawnKey(Zobrist.generatePawnKey(this));
@@ -64,7 +63,7 @@ public class Board {
      * castling, promotions, and en passant captures.
      *
      * @param move the move to apply
-         */
+     */
     public void makeMove(Move move) {
         int startSquare = move.getStartSquare();
         int endSquare = move.getEndSquare();
@@ -234,10 +233,10 @@ public class Board {
     /**
      * Toggles the presence of a piece on two squares (e.g., moving a piece from start to end).
      *
-     * @param type the piece type
-     * @param isWhite true for White pieces, false for Black
+     * @param type        the piece type
+     * @param isWhite     true for White pieces, false for Black
      * @param startSquare the starting square (0-63)
-     * @param endSquare the ending square (0-63)
+     * @param endSquare   the ending square (0-63)
      **/
     public void toggleSquares(Piece type, boolean isWhite, int startSquare, int endSquare) {
         long toggleMask = (1L << startSquare | 1L << endSquare);
@@ -247,9 +246,9 @@ public class Board {
     /**
      * Toggles the presence of a piece on a single square.
      *
-     * @param type the piece type
+     * @param type    the piece type
      * @param isWhite true for White pieces, false for Black
-     * @param square the square index (0-63)
+     * @param square  the square index (0-63)
      */
     public void toggleSquare(Piece type, boolean isWhite, int square) {
         long toggleMask = 1L << square;
@@ -259,24 +258,41 @@ public class Board {
     /**
      * Toggles piece bitboards based on piece type and color.
      *
-     * @param type the piece type
-     * @param isWhite true for White pieces, false for Black
+     * @param type       the piece type
+     * @param isWhite    true for White pieces, false for Black
      * @param toggleMask the bitboard mask to toggle
      */
     private void toggle(Piece type, boolean isWhite, long toggleMask) {
         switch (type) {
-            case PAWN ->    { if (isWhite) whitePawns ^= toggleMask;    else blackPawns ^= toggleMask; }
-            case KNIGHT ->  { if (isWhite) whiteKnights ^= toggleMask;  else blackKnights ^= toggleMask; }
-            case BISHOP ->  { if (isWhite) whiteBishops ^= toggleMask;  else blackBishops ^= toggleMask; }
-            case ROOK ->    { if (isWhite) whiteRooks ^= toggleMask;    else blackRooks ^= toggleMask; }
-            case QUEEN ->   { if (isWhite) whiteQueens ^= toggleMask;   else blackQueens ^= toggleMask; }
-            case KING ->    { if (isWhite) whiteKing ^= toggleMask;     else blackKing ^= toggleMask; }
+            case PAWN -> {
+                if (isWhite) whitePawns ^= toggleMask;
+                else blackPawns ^= toggleMask;
+            }
+            case KNIGHT -> {
+                if (isWhite) whiteKnights ^= toggleMask;
+                else blackKnights ^= toggleMask;
+            }
+            case BISHOP -> {
+                if (isWhite) whiteBishops ^= toggleMask;
+                else blackBishops ^= toggleMask;
+            }
+            case ROOK -> {
+                if (isWhite) whiteRooks ^= toggleMask;
+                else blackRooks ^= toggleMask;
+            }
+            case QUEEN -> {
+                if (isWhite) whiteQueens ^= toggleMask;
+                else blackQueens ^= toggleMask;
+            }
+            case KING -> {
+                if (isWhite) whiteKing ^= toggleMask;
+                else blackKing ^= toggleMask;
+            }
         }
     }
 
     /**
      * Recalculates the combined bitboards for White pieces, Black pieces, and occupied squares.
-     *
      */
     public void recalculatePieces() {
         whitePieces = whitePawns | whiteKnights | whiteBishops | whiteRooks | whiteQueens | whiteKing;
@@ -288,8 +304,8 @@ public class Board {
      * Calculates new castling rights after a move, clearing rights if the king or rooks move.
      *
      * @param startSquare the starting square of the move
-     * @param endSquare the ending square of the move
-     * @param pieceType the type of piece moved
+     * @param endSquare   the ending square of the move
+     * @param pieceType   the type of piece moved
      * @return the updated castling rights bitmask
      */
     private int calculateCastlingRights(int startSquare, int endSquare, Piece pieceType) {
@@ -298,19 +314,19 @@ public class Board {
             return newCastlingRights;
         }
         if (Piece.KING.equals(pieceType)) {
-            newCastlingRights &= isWhiteToMove ? Bits.CLEAR_WHITE_CASTLING_MASK : Bits.CLEAR_BLACK_CASTLING_MASK;
+            newCastlingRights &= isWhiteToMove ? BitboardConstants.CLEAR_WHITE_CASTLING_MASK : BitboardConstants.CLEAR_BLACK_CASTLING_MASK;
         }
         if (startSquare == 7 || endSquare == 7) {
-            newCastlingRights &= Bits.CLEAR_WHITE_KINGSIDE_MASK;
+            newCastlingRights &= BitboardConstants.CLEAR_WHITE_KINGSIDE_MASK;
         }
         if (startSquare == 63 || endSquare == 63) {
-            newCastlingRights &= Bits.CLEAR_BLACK_KINGSIDE_MASK;
+            newCastlingRights &= BitboardConstants.CLEAR_BLACK_KINGSIDE_MASK;
         }
         if (startSquare == 0 || endSquare == 0) {
-            newCastlingRights &= Bits.CLEAR_WHITE_QUEENSIDE_MASK;
+            newCastlingRights &= BitboardConstants.CLEAR_WHITE_QUEENSIDE_MASK;
         }
         if (startSquare == 56 || endSquare == 56) {
-            newCastlingRights &= Bits.CLEAR_BLACK_QUEENSIDE_MASK;
+            newCastlingRights &= BitboardConstants.CLEAR_BLACK_QUEENSIDE_MASK;
         }
         return newCastlingRights;
     }
@@ -403,11 +419,10 @@ public class Board {
      * @return true if there are knights, bishops or rooks or queens remaining, false otherwise
      */
     public boolean hasPiecesRemaining(boolean isWhite) {
-        if (isWhite && BitwiseOperations.countBits(whiteKnights) > 0 || BitwiseOperations.countBits(whiteBishops) > 0 ||
-                BitwiseOperations.countBits(whiteRooks) > 0 || BitwiseOperations.countBits(whiteQueens) > 0) {
+        if (isWhite && BitOperations.countBits(whiteKnights) > 0 || BitOperations.countBits(whiteBishops) > 0 ||
+                BitOperations.countBits(whiteRooks) > 0 || BitOperations.countBits(whiteQueens) > 0) {
             return true;
-        }
-        else return BitwiseOperations.countBits(blackKnights) > 0 || BitwiseOperations.countBits(blackBishops) > 0 ||
-                BitwiseOperations.countBits(blackRooks) > 0 || BitwiseOperations.countBits(blackQueens) > 0;
+        } else return BitOperations.countBits(blackKnights) > 0 || BitOperations.countBits(blackBishops) > 0 ||
+                BitOperations.countBits(blackRooks) > 0 || BitOperations.countBits(blackQueens) > 0;
     }
 }

@@ -3,7 +3,7 @@ package com.utsab.chess_engine.minimax.service.impl;
 import com.utsab.chess_engine.bot.entity.Bots;
 import com.utsab.chess_engine.bot.repository.BotRepository;
 import com.utsab.chess_engine.common.entity.Player;
-import com.utsab.chess_engine.core.Core;
+import com.utsab.chess_engine.core.UChessEngineUCI;
 import com.utsab.chess_engine.core.board.Move;
 import com.utsab.chess_engine.core.search.SearchResult;
 import com.utsab.chess_engine.core.utils.notation.FEN;
@@ -66,8 +66,8 @@ public class UChessServiceImplementation implements UChessService {
      */
     @Override
     public GameDto startNewGame(NewGameRequest request) {
-        Core.ENGINE.gameOver();
-        Core.ENGINE.newGame();
+        UChessEngineUCI.ENGINE.gameOver();
+        UChessEngineUCI.ENGINE.newGame();
 
         UserEntity user = loggedInUserUtil.getLoggedInUser();
         Bots bot = botRepository.findBySlug(request.botSlug())
@@ -111,8 +111,8 @@ public class UChessServiceImplementation implements UChessService {
             botMove = getBestMove(uChessRequest);
         }
 
-        Core.ENGINE.setPosition(initialFen, new ArrayList<>());
-        String currentTurn = Core.ENGINE.getBoard().isWhiteToMove() ? "WHITE" : "BLACK";
+        UChessEngineUCI.ENGINE.setPosition(initialFen, new ArrayList<>());
+        String currentTurn = UChessEngineUCI.ENGINE.getBoard().isWhiteToMove() ? "WHITE" : "BLACK";
 
         return new GameDto(
                 game.getId(),
@@ -154,8 +154,8 @@ public class UChessServiceImplementation implements UChessService {
         } else {
             maxDepth = 200;
         }
-        Core.ENGINE.getConfig().setMaxDepth(maxDepth);
-        log.info("Max depth set to: {}", Core.ENGINE.getConfig().getMaxDepth());
+        UChessEngineUCI.ENGINE.getConfig().setMaxDepth(maxDepth);
+        log.info("Max depth set to: {}", UChessEngineUCI.ENGINE.getConfig().getMaxDepth());
 
         List<MoveEntity> moves = new ArrayList<>(game.getMoveEntities());
         List<Move> moveList = new ArrayList<>();
@@ -167,8 +167,8 @@ public class UChessServiceImplementation implements UChessService {
         String fen = game.getInitialFen();
         UUID gameId = uChessRequest.getGameId();
 
-        Core.ENGINE.setPosition(fen, moveList);
-        List<Move> validMoves = Core.ENGINE.getMoveGenerator().generateMoves(Core.ENGINE.getBoard());
+        UChessEngineUCI.ENGINE.setPosition(fen, moveList);
+        List<Move> validMoves = UChessEngineUCI.ENGINE.getMoveGenerator().generateMoves(UChessEngineUCI.ENGINE.getBoard());
 
         if (uChessRequest.getMove() != null &&
                 validMoves.stream().noneMatch(m -> Notation.toNotation(m).equals(uChessRequest.getMove()))) {
@@ -185,12 +185,12 @@ public class UChessServiceImplementation implements UChessService {
             gameRepository.save(game);
             moveList = new ArrayList<>(moveList);
             moveList.add(Notation.fromCombinedNotation(uChessRequest.getMove()));
-            Core.ENGINE.setPosition(fen, moveList);
+            UChessEngineUCI.ENGINE.setPosition(fen, moveList);
         }
 
-        SearchResult result = Core.ENGINE.thinkSync(1000);
+        SearchResult result = UChessEngineUCI.ENGINE.thinkSync(1000);
         String bestMove = Notation.toNotation(result.move());
-        String bestMoveSan = SAN.toSan(result.move(), Core.ENGINE.getBoard());
+        String bestMoveSan = SAN.toSan(result.move(), UChessEngineUCI.ENGINE.getBoard());
 
         float moveNumber = calculateMoveNumber(game.getMoveEntities().size() + 1);
         MoveEntity moveEntity = MoveEntity.builder()
@@ -221,8 +221,8 @@ public class UChessServiceImplementation implements UChessService {
         List<MoveEntity> moves = game.getMoveEntities();
         List<String> uciMoves = moves.stream().map(MoveEntity::getUci).toList();
 
-        Core.ENGINE.setPosition(fen, uciMoves.stream().map(Notation::fromCombinedNotation).toList());
-        String currentTurn = Core.ENGINE.getBoard().isWhiteToMove() ? "WHITE" : "BLACK";
+        UChessEngineUCI.ENGINE.setPosition(fen, uciMoves.stream().map(Notation::fromCombinedNotation).toList());
+        String currentTurn = UChessEngineUCI.ENGINE.getBoard().isWhiteToMove() ? "WHITE" : "BLACK";
 
         return new GameDto(
                 game.getId(),

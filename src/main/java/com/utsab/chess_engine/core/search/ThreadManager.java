@@ -1,6 +1,6 @@
 package com.utsab.chess_engine.core.search;
 
-import com.utsab.chess_engine.core.Core;
+import com.utsab.chess_engine.core.UChessEngineUCI;
 import com.utsab.chess_engine.core.evaluation.Score;
 import org.springframework.stereotype.Component;
 
@@ -36,7 +36,7 @@ public class ThreadManager {
         Objects.requireNonNull(searchResult, "Search result cannot be null");
         if (searchResult.depth() > depthLogged
                 && (searchResult.time() > 0 || Score.isMateScore(searchResult.eval()))) {
-            Core.writeSearchInfo(searchResult);
+            UChessEngineUCI.writeSearchInfo(searchResult);
             depthLogged++;
         }
     }

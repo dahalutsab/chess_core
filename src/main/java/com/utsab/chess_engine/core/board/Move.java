@@ -11,9 +11,9 @@ import java.util.Optional;
  * <p>
  * The encoding structure is:
  * <ul>
- *     <li>Bits 0-5: Start square (0-63)</li>
- *     <li>Bits 6-11: End square (0-63)</li>
- *     <li>Bits 12-15: Special move flags (e.g., promotion, castling)</li>
+ *     <li>BitboardConstants 0-5: Start square (0-63)</li>
+ *     <li>BitboardConstants 6-11: End square (0-63)</li>
+ *     <li>BitboardConstants 12-15: Special move flags (e.g., promotion, castling)</li>
  * </ul>
  *
  * * @version 1.0

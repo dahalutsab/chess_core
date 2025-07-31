@@ -1,6 +1,6 @@
 package com.utsab.chess_engine.core.search.moveordering;
 
-import com.utsab.chess_engine.core.board.BitwiseOperations;
+import com.utsab.chess_engine.core.board.BitOperations;
 import com.utsab.chess_engine.core.board.Board;
 import com.utsab.chess_engine.core.board.Move;
 import com.utsab.chess_engine.core.board.Piece;
@@ -13,8 +13,8 @@ import com.utsab.chess_engine.core.utils.BoardUtils;
  *
  * @author Utsab Dahal
  * @version 1.0
- * @since 2025
  * @see <a href="https://www.chessprogramming.org/Static_Exchange_Evaluation">Chess Programming Wiki - Static Exchange Evaluation</a>
+ * @since 2025
  */
 public class StaticExchangeEvaluator {
 
@@ -26,7 +26,7 @@ public class StaticExchangeEvaluator {
      * @param board the current board position
      * @param move  the capture move to evaluate
      * @return the net material change (positive for gain, negative for loss)
-     * @throws NullPointerException if board or move is null
+     * @throws NullPointerException     if board or move is null
      * @throws IllegalArgumentException if move's end square is invalid
      */
     public int evaluate(Board board, Move move) {
@@ -55,7 +55,7 @@ public class StaticExchangeEvaluator {
      * @param board the current board position (post-move)
      * @param move  the capture move already made
      * @return the net material change (positive for gain, negative for loss)
-     * @throws NullPointerException if board or move is null
+     * @throws NullPointerException     if board or move is null
      * @throws IllegalArgumentException if move's end square is invalid
      */
     public int evaluateAfterMove(Board board, Move move) {
@@ -80,7 +80,7 @@ public class StaticExchangeEvaluator {
     /**
      * Finds the least valuable piece attacking a square for the side to move.
      *
-     * @param board the current board position
+     * @param board  the current board position
      * @param square the target square
      * @return the move of the least valuable attacker, or null if none
      * @throws IllegalArgumentException if square is invalid
@@ -111,7 +111,7 @@ public class StaticExchangeEvaluator {
                 case KING -> moveGenerator.getKingAttacks(board, square, !isWhite);
             };
             if ((attackMask & pieces) != 0) {
-                int startSquare = BitwiseOperations.getNextBit(attackMask & pieces);
+                int startSquare = BitOperations.getNextBit(attackMask & pieces);
                 return new Move(startSquare, square);
             }
         }

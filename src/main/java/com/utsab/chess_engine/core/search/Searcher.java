@@ -78,7 +78,7 @@ public class Searcher implements Search {
      * @return A {@link SearchResult} containing the best move and the current evaluation.
      */
     @Override
-    public SearchResult search(Duration duration) {
+    public SearchResult negamax(Duration duration) {
 
         start = Instant.now();
         timeout = start.plus(duration);

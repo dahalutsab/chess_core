@@ -9,10 +9,10 @@ import com.utsab.chess_engine.core.utils.BoardUtils;
  *
  * @author Utsab Dahal
  * @version 1.0
- * @since 2025
  * @see <a href="https://www.chessprogramming.org/Bitboards">Chess Programming Wiki - Bitboards</a>
+ * @since 2025
  */
-public class Bits {
+public class BitboardConstants {
 
     /**
      * Bitboard representing all 64 squares (all bits set).
@@ -28,25 +28,25 @@ public class Bits {
      * Bitboard for rank 1 (squares a1-h1).
      */
     public static final long RANK_1 = 0b0000000000000000000000000000000000000000000000000000000011111111L;
-    public static final long RANK_2 = BitwiseOperations.shiftNorth(RANK_1);
-    public static final long RANK_3 = BitwiseOperations.shiftNorth(RANK_2);
-    public static final long RANK_4 = BitwiseOperations.shiftNorth(RANK_3);
-    public static final long RANK_5 = BitwiseOperations.shiftNorth(RANK_4);
-    public static final long RANK_6 = BitwiseOperations.shiftNorth(RANK_5);
-    public static final long RANK_7 = BitwiseOperations.shiftNorth(RANK_6);
-    public static final long RANK_8 = BitwiseOperations.shiftNorth(RANK_7);
+    public static final long RANK_2 = BitOperations.shiftNorth(RANK_1);
+    public static final long RANK_3 = BitOperations.shiftNorth(RANK_2);
+    public static final long RANK_4 = BitOperations.shiftNorth(RANK_3);
+    public static final long RANK_5 = BitOperations.shiftNorth(RANK_4);
+    public static final long RANK_6 = BitOperations.shiftNorth(RANK_5);
+    public static final long RANK_7 = BitOperations.shiftNorth(RANK_6);
+    public static final long RANK_8 = BitOperations.shiftNorth(RANK_7);
 
     /**
      * Bitboard for file A (squares a1-a8).
      */
     public static final long FILE_A = 0b0000000100000001000000010000000100000001000000010000000100000001L;
-    public static final long FILE_B = BitwiseOperations.shiftEast(FILE_A);
-    public static final long FILE_C = BitwiseOperations.shiftEast(FILE_B);
-    public static final long FILE_D = BitwiseOperations.shiftEast(FILE_C);
-    public static final long FILE_E = BitwiseOperations.shiftEast(FILE_D);
-    public static final long FILE_F = BitwiseOperations.shiftEast(FILE_E);
-    public static final long FILE_G = BitwiseOperations.shiftEast(FILE_F);
-    public static final long FILE_H = BitwiseOperations.shiftEast(FILE_G);
+    public static final long FILE_B = BitOperations.shiftEast(FILE_A);
+    public static final long FILE_C = BitOperations.shiftEast(FILE_B);
+    public static final long FILE_D = BitOperations.shiftEast(FILE_C);
+    public static final long FILE_E = BitOperations.shiftEast(FILE_D);
+    public static final long FILE_F = BitOperations.shiftEast(FILE_E);
+    public static final long FILE_G = BitOperations.shiftEast(FILE_F);
+    public static final long FILE_H = BitOperations.shiftEast(FILE_G);
 
     /**
      * Array of bitboards for files A-H.
@@ -56,41 +56,41 @@ public class Bits {
     /**
      * Bitboards for diagonals (a1-h8, etc.).
      */
-    public static final long DIAGONAL_1 =   0x1L;
-    public static final long DIAGONAL_2 =   0x102L;
-    public static final long DIAGONAL_3 =   0x10204L;
-    public static final long DIAGONAL_4 =   0x1020408L;
-    public static final long DIAGONAL_5 =   0x102040810L;
-    public static final long DIAGONAL_6 =   0x10204081020L;
-    public static final long DIAGONAL_7 =   0x1020408102040L;
-    public static final long DIAGONAL_8 =   0x102040810204080L;
-    public static final long DIAGONAL_9 =   0x204081020408000L;
-    public static final long DIAGONAL_10 =  0x408102040800000L;
-    public static final long DIAGONAL_11 =  0x810204080000000L;
-    public static final long DIAGONAL_12 =  0x1020408000000000L;
-    public static final long DIAGONAL_13 =  0x2040800000000000L;
-    public static final long DIAGONAL_14 =  0x4080000000000000L;
-    public static final long DIAGONAL_15 =  0x8000000000000000L;
+    public static final long DIAGONAL_1 = 0x1L;
+    public static final long DIAGONAL_2 = 0x102L;
+    public static final long DIAGONAL_3 = 0x10204L;
+    public static final long DIAGONAL_4 = 0x1020408L;
+    public static final long DIAGONAL_5 = 0x102040810L;
+    public static final long DIAGONAL_6 = 0x10204081020L;
+    public static final long DIAGONAL_7 = 0x1020408102040L;
+    public static final long DIAGONAL_8 = 0x102040810204080L;
+    public static final long DIAGONAL_9 = 0x204081020408000L;
+    public static final long DIAGONAL_10 = 0x408102040800000L;
+    public static final long DIAGONAL_11 = 0x810204080000000L;
+    public static final long DIAGONAL_12 = 0x1020408000000000L;
+    public static final long DIAGONAL_13 = 0x2040800000000000L;
+    public static final long DIAGONAL_14 = 0x4080000000000000L;
+    public static final long DIAGONAL_15 = 0x8000000000000000L;
 
 
     /**
      * Bitboards for anti-diagonals (h1-a8, etc.).
      */
-    public static final long ANTI_DIAGONAL_MASK_1 =   0x80L;
-    public static final long ANTI_DIAGONAL_MASK_2 =   0x8040L;
-    public static final long ANTI_DIAGONAL_MASK_3 =   0x804020L;
-    public static final long ANTI_DIAGONAL_MASK_4 =   0x80402010L;
-    public static final long ANTI_DIAGONAL_MASK_5 =   0x8040201008L;
-    public static final long ANTI_DIAGONAL_MASK_6 =   0x804020100804L;
-    public static final long ANTI_DIAGONAL_MASK_7 =   0x80402010080402L;
-    public static final long ANTI_DIAGONAL_MASK_8 =   0x8040201008040201L;
-    public static final long ANTI_DIAGONAL_MASK_9 =   0x4020100804020100L;
-    public static final long ANTI_DIAGONAL_MASK_10 =  0x2010080402010000L;
-    public static final long ANTI_DIAGONAL_MASK_11 =  0x1008040201000000L;
-    public static final long ANTI_DIAGONAL_MASK_12 =  0x804020100000000L;
-    public static final long ANTI_DIAGONAL_MASK_13 =  0x402010000000000L;
-    public static final long ANTI_DIAGONAL_MASK_14 =  0x201000000000000L;
-    public static final long ANTI_DIAGONAL_MASK_15 =  0x100000000000000L;
+    public static final long ANTI_DIAGONAL_MASK_1 = 0x80L;
+    public static final long ANTI_DIAGONAL_MASK_2 = 0x8040L;
+    public static final long ANTI_DIAGONAL_MASK_3 = 0x804020L;
+    public static final long ANTI_DIAGONAL_MASK_4 = 0x80402010L;
+    public static final long ANTI_DIAGONAL_MASK_5 = 0x8040201008L;
+    public static final long ANTI_DIAGONAL_MASK_6 = 0x804020100804L;
+    public static final long ANTI_DIAGONAL_MASK_7 = 0x80402010080402L;
+    public static final long ANTI_DIAGONAL_MASK_8 = 0x8040201008040201L;
+    public static final long ANTI_DIAGONAL_MASK_9 = 0x4020100804020100L;
+    public static final long ANTI_DIAGONAL_MASK_10 = 0x2010080402010000L;
+    public static final long ANTI_DIAGONAL_MASK_11 = 0x1008040201000000L;
+    public static final long ANTI_DIAGONAL_MASK_12 = 0x804020100000000L;
+    public static final long ANTI_DIAGONAL_MASK_13 = 0x402010000000000L;
+    public static final long ANTI_DIAGONAL_MASK_14 = 0x201000000000000L;
+    public static final long ANTI_DIAGONAL_MASK_15 = 0x100000000000000L;
 
     /**
      * Bitboards for squares that must be unoccupied for legal castling.
@@ -184,7 +184,7 @@ public class Bits {
     private static long[] generateWestFileMask() {
         long[] westFileMasks = new long[8];
         for (int i = 0; i < 8; i++) {
-            westFileMasks[i] = i > 0 ? Bits.FILE_A << (i - 1) : 0;
+            westFileMasks[i] = i > 0 ? BitboardConstants.FILE_A << (i - 1) : 0;
         }
         return westFileMasks;
     }
@@ -198,7 +198,7 @@ public class Bits {
     private static long[] generateEastFileMask() {
         long[] westFileMasks = new long[8];
         for (int i = 0; i < 8; i++) {
-            westFileMasks[i] = i < 7 ? Bits.FILE_A << (i + 1) : 0;
+            westFileMasks[i] = i < 7 ? BitboardConstants.FILE_A << (i + 1) : 0;
         }
         return westFileMasks;
     }
@@ -212,8 +212,8 @@ public class Bits {
     private static long[] generateAdjacentFileMask() {
         long[] adjacentFileMasks = new long[8];
         for (int i = 0; i < 8; i++) {
-            long left = i > 0 ? Bits.FILE_A << (i - 1) : 0;
-            long right = i < 7 ? Bits.FILE_A << (i + 1) : 0;
+            long left = i > 0 ? BitboardConstants.FILE_A << (i - 1) : 0;
+            long right = i < 7 ? BitboardConstants.FILE_A << (i + 1) : 0;
             adjacentFileMasks[i] = left | right;
         }
         return adjacentFileMasks;
@@ -228,7 +228,7 @@ public class Bits {
     private static long[] generateTripleFileMask() {
         long[] tripleFileMasks = new long[8];
         for (int i = 0; i < 8; i++) {
-            long fileMask = Bits.FILE_MASKS[i];
+            long fileMask = BitboardConstants.FILE_MASKS[i];
             long adjacentFileMask = ADJACENT_FILE_MASK[i];
             tripleFileMasks[i] = fileMask | adjacentFileMask;
         }
@@ -248,7 +248,7 @@ public class Bits {
             int file = BoardUtils.getFile(square);
             int rank = BoardUtils.getRank(square);
 
-            long fileMask = Bits.FILE_MASKS[file];
+            long fileMask = BitboardConstants.FILE_MASKS[file];
             long tripleFileMask = fileMask | ADJACENT_FILE_MASK[file];
 
             long forwardMask = isWhite ? ~(Long.MAX_VALUE >>> (64 - 8 * (rank + 1))) : ((1L << 8 * rank) - 1);
@@ -269,8 +269,8 @@ public class Bits {
         for (int square = 0; square < 64; square++) {
             long squareBB = 1L << square;
             pawnProtectionMask[square] = isWhite ?
-                    BitwiseOperations.shiftSouthEast(squareBB) | BitwiseOperations.shiftSouthWest(squareBB) :
-                    BitwiseOperations.shiftNorthEast(squareBB) | BitwiseOperations.shiftNorthWest(squareBB);
+                    BitOperations.shiftSouthEast(squareBB) | BitOperations.shiftSouthWest(squareBB) :
+                    BitOperations.shiftNorthEast(squareBB) | BitOperations.shiftNorthWest(squareBB);
         }
         return pawnProtectionMask;
     }

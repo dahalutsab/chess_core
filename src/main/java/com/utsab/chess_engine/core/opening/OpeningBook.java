@@ -17,7 +17,7 @@ import java.util.Random;
  * </p>
  * The opening book is enabled by default. It can be disabled via the 'OwnBook' UCI command.
  * </p>
- * The default opening book is borrowed from Sebastian Lague's Chess Coding Adventure.
+ * The default opening book is taken from Sebastian Lague's Chess Coding Adventure.
  * @see <a href="https://github.com/SebLague/Chess-Coding-Adventure">Chess Coding Adventure</a>
  */
 public class OpeningBook {

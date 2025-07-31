@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
  */
 //@FieldDefaults(level = AccessLevel.PRIVATE)
 @Slf4j
-public class Core {
+public class UChessEngineUCI {
 
     public static final Engine ENGINE = EngineInitializer.loadEngine();
     static final Scanner SCANNER = new Scanner(System.in);
@@ -137,7 +137,7 @@ public class Core {
             int incrementBlackMs = getLabelInt(command, "binc", GO_LABELS);
             thinkTime = ENGINE.chooseThinkTime(timeWhiteMs, timeBlackMs, incrementWhiteMs, incrementBlackMs);
         }
-        ENGINE.think(thinkTime, Core::writeMove);
+        ENGINE.think(thinkTime, UChessEngineUCI::writeMove);
     }
 
     public static void handlePonderHit() {

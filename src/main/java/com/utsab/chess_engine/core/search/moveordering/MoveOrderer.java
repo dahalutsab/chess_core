@@ -11,15 +11,15 @@ import java.util.List;
 
 /**
  * Implementation of {@link MoveOrdering} using the following move-ordering strategy:
- *  1. Previous best move found at an earlier ply
- *  2. Queen promotions
- *  3. Winning captures (sub-ordered using MVV-LVA)
- *  4. Equal captures (sub-ordered using MVV-LVA)
- *  5. Killer moveEntities
- *  6. Losing captures (sub-ordered using MVV-LVA)
- *  7. Under-promotions
- *  8. History moveEntities
- *  9. Everything else.
+ * 1. Previous best move found at an earlier ply
+ * 2. Queen promotions
+ * 3. Winning captures (sub-ordered using MVV-LVA)
+ * 4. Equal captures (sub-ordered using MVV-LVA)
+ * 5. Killer moveEntities
+ * 6. Losing captures (sub-ordered using MVV-LVA)
+ * 7. Under-promotions
+ * 8. History moveEntities
+ * 9. Everything else.
  */
 public class MoveOrderer implements MoveOrdering {
 
@@ -37,12 +37,12 @@ public class MoveOrderer implements MoveOrdering {
     private static final int MAX_KILLER_MOVE_PLY_DEPTH = 32;
     private static final int MAX_KILLER_MOVES_PER_PLY = 3;
 
-    public static final int[][] MVV_LVA_TABLE = new int[][] {
-            new int[] {15, 14, 13, 12, 11, 10},  // victim P, attacker P, N, B, R, Q, K
-            new int[] {25, 24, 23, 22, 21, 20},  // victim N, attacker P, N, B, R, Q, K
-            new int[] {35, 34, 33, 32, 31, 30},  // victim B, attacker P, N, B, R, Q, K
-            new int[] {45, 44, 43, 42, 41, 40},  // victim R, attacker P, N, B, R, Q, K
-            new int[] {55, 54, 53, 52, 51, 50},  // victim Q, attacker P, N, B, R, Q, K
+    public static final int[][] MVV_LVA_TABLE = new int[][]{
+            new int[]{15, 14, 13, 12, 11, 10},  // victim P, attacker P, N, B, R, Q, K
+            new int[]{25, 24, 23, 22, 21, 20},  // victim N, attacker P, N, B, R, Q, K
+            new int[]{35, 34, 33, 32, 31, 30},  // victim B, attacker P, N, B, R, Q, K
+            new int[]{45, 44, 43, 42, 41, 40},  // victim R, attacker P, N, B, R, Q, K
+            new int[]{55, 54, 53, 52, 51, 50},  // victim Q, attacker P, N, B, R, Q, K
     };
 
     private Move[][] killerMoves = new Move[MAX_KILLER_MOVE_PLY_DEPTH][MAX_KILLER_MOVES_PER_PLY];
@@ -51,11 +51,11 @@ public class MoveOrderer implements MoveOrdering {
     /**
      * Orders the given list of moveEntities based on the defined move-ordering strategy.
      *
-     * @param board The current board state.
-     * @param moves The list of moveEntities to be ordered.
+     * @param board            The current board state.
+     * @param moves            The list of moveEntities to be ordered.
      * @param previousBestMove The best move found at an earlier ply.
-     * @param includeKillers Whether to include killer moveEntities in the ordering.
-     * @param depth The current search depth.
+     * @param includeKillers   Whether to include killer moveEntities in the ordering.
+     * @param depth            The current search depth.
      * @return The ordered list of moveEntities.
      */
     public List<Move> orderMoves(Board board, List<Move> moves, Move previousBestMove, boolean includeKillers, int depth) {
@@ -68,11 +68,11 @@ public class MoveOrderer implements MoveOrdering {
     /**
      * Scores a move based on various heuristics such as previous best move, MVV-LVA, killer moveEntities, and history moveEntities.
      *
-     * @param board The current board state.
-     * @param move The move to be scored.
+     * @param board            The current board state.
+     * @param move             The move to be scored.
      * @param previousBestMove The best move found at an earlier ply.
-     * @param includeKillers Whether to include killer moveEntities in the scoring.
-     * @param depth The current search depth.
+     * @param includeKillers   Whether to include killer moveEntities in the scoring.
+     * @param depth            The current search depth.
      * @return The score of the move.
      */
     public int scoreMove(Board board, Move move, Move previousBestMove, boolean includeKillers, int depth) {
@@ -108,8 +108,7 @@ public class MoveOrderer implements MoveOrdering {
             } else {
                 moveScore += LOSING_CAPTURE_BIAS;
             }
-        }
-        else {
+        } else {
             // Non-captures are sorted using history + killers
             boolean isKiller = includeKillers && isKillerMove(depth, move);
             if (isKiller) {
@@ -145,7 +144,7 @@ public class MoveOrderer implements MoveOrdering {
     /**
      * Adds a new killer move for a given ply.
      *
-     * @param ply The current ply depth.
+     * @param ply       The current ply depth.
      * @param newKiller The new killer move to be added.
      */
     public void addKillerMove(int ply, Move newKiller) {
@@ -165,7 +164,7 @@ public class MoveOrderer implements MoveOrdering {
     /**
      * Checks if a move is a killer move at a given ply.
      *
-     * @param ply The current ply depth.
+     * @param ply  The current ply depth.
      * @param move The move to be checked.
      * @return True if the move is a killer move, otherwise false.
      */
@@ -178,8 +177,8 @@ public class MoveOrderer implements MoveOrdering {
      * Adds a history move for a given ply and color.
      *
      * @param plyRemaining The remaining ply depth.
-     * @param historyMove The history move to be added.
-     * @param isWhite Whether the move is for white pieces.
+     * @param historyMove  The history move to be added.
+     * @param isWhite      Whether the move is for white pieces.
      */
     public void addHistoryMove(int plyRemaining, Move historyMove, boolean isWhite) {
         int colourIndex = BoardUtils.getColourIndex(isWhite);

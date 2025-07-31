@@ -171,7 +171,7 @@ public class Engine {
      */
     public SearchResult think(int thinkTimeMs) {
         Duration thinkTime = Duration.ofMillis(thinkTimeMs);
-        return searcher.search(thinkTime);
+        return searcher.negamax(thinkTime);
     }
 
     /**

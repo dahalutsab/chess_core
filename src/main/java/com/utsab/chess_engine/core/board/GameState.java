@@ -41,7 +41,7 @@ public class GameState {
     /**
      * Bitmask representing castling rights (4 bits: White kingside, queenside, Black kingside, queenside).
      */
-    private int castlingRights = Bits.INITIAL_CASTLING_RIGHTS;
+    private int castlingRights = BitboardConstants.INITIAL_CASTLING_RIGHTS;
 
     /**
      * Number of half-moveEntities since the last capture or pawn move, for the fifty-move rule.

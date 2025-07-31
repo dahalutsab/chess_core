@@ -1,7 +1,7 @@
 package com.utsab.chess_engine.core.generation;
 
-import com.utsab.chess_engine.core.board.Bits;
-import com.utsab.chess_engine.core.board.BitwiseOperations;
+import com.utsab.chess_engine.core.board.BitboardConstants;
+import com.utsab.chess_engine.core.board.BitOperations;
 import com.utsab.chess_engine.core.utils.BoardUtils;
 
 import java.util.ArrayList;
@@ -199,8 +199,8 @@ public class MagicBitboards {
      */
     public static long pawnAttacks(long pawns, boolean isWhite) {
         return isWhite ?
-                (BitwiseOperations.shiftNorthWest(pawns) &~ Bits.FILE_H) | (BitwiseOperations.shiftNorthEast(pawns) &~ Bits.FILE_A) :
-                (BitwiseOperations.shiftSouthWest(pawns) &~ Bits.FILE_H) | (BitwiseOperations.shiftSouthEast(pawns) &~ Bits.FILE_A);
+                (BitOperations.shiftNorthWest(pawns) &~ BitboardConstants.FILE_H) | (BitOperations.shiftNorthEast(pawns) &~ BitboardConstants.FILE_A) :
+                (BitOperations.shiftSouthWest(pawns) &~ BitboardConstants.FILE_H) | (BitOperations.shiftSouthEast(pawns) &~ BitboardConstants.FILE_A);
     }
 
     /**
@@ -445,8 +445,8 @@ public class MagicBitboards {
      * @return True if the vector offset is valid for the square, false otherwise.
      */
     private static boolean isValidVectorOffset(int square, int vectorOffset) {
-        boolean isAFile = (Bits.FILE_A & 1L << square) != 0;
-        boolean isHFile = (Bits.FILE_H & 1L << square) != 0;
+        boolean isAFile = (BitboardConstants.FILE_A & 1L << square) != 0;
+        boolean isHFile = (BitboardConstants.FILE_H & 1L << square) != 0;
         boolean isVectorAFileException = BoardUtils.A_FILE_OFFSET_EXCEPTIONS.contains(vectorOffset);
         boolean isVectorHFileException = BoardUtils.H_FILE_OFFSET_EXCEPTIONS.contains(vectorOffset);
         return (!isAFile || !isVectorAFileException) && (!isHFile || !isVectorHFileException);

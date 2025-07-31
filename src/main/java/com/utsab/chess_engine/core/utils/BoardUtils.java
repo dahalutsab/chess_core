@@ -92,21 +92,21 @@ public class BoardUtils {
      */
     public static int getDiagonal(int sq) {
         long bb = 1L << sq;
-        if ((bb & Bits.DIAGONAL_1) != 0) return 0;
-        if ((bb & Bits.DIAGONAL_2) != 0) return 1;
-        if ((bb & Bits.DIAGONAL_3) != 0) return 2;
-        if ((bb & Bits.DIAGONAL_4) != 0) return 3;
-        if ((bb & Bits.DIAGONAL_5) != 0) return 4;
-        if ((bb & Bits.DIAGONAL_6) != 0) return 5;
-        if ((bb & Bits.DIAGONAL_7) != 0) return 6;
-        if ((bb & Bits.DIAGONAL_8) != 0) return 7;
-        if ((bb & Bits.DIAGONAL_9) != 0) return 8;
-        if ((bb & Bits.DIAGONAL_10) != 0) return 9;
-        if ((bb & Bits.DIAGONAL_11) != 0) return 10;
-        if ((bb & Bits.DIAGONAL_12) != 0) return 11;
-        if ((bb & Bits.DIAGONAL_13) != 0) return 12;
-        if ((bb & Bits.DIAGONAL_14) != 0) return 13;
-        if ((bb & Bits.DIAGONAL_15) != 0) return 14;
+        if ((bb & BitboardConstants.DIAGONAL_1) != 0) return 0;
+        if ((bb & BitboardConstants.DIAGONAL_2) != 0) return 1;
+        if ((bb & BitboardConstants.DIAGONAL_3) != 0) return 2;
+        if ((bb & BitboardConstants.DIAGONAL_4) != 0) return 3;
+        if ((bb & BitboardConstants.DIAGONAL_5) != 0) return 4;
+        if ((bb & BitboardConstants.DIAGONAL_6) != 0) return 5;
+        if ((bb & BitboardConstants.DIAGONAL_7) != 0) return 6;
+        if ((bb & BitboardConstants.DIAGONAL_8) != 0) return 7;
+        if ((bb & BitboardConstants.DIAGONAL_9) != 0) return 8;
+        if ((bb & BitboardConstants.DIAGONAL_10) != 0) return 9;
+        if ((bb & BitboardConstants.DIAGONAL_11) != 0) return 10;
+        if ((bb & BitboardConstants.DIAGONAL_12) != 0) return 11;
+        if ((bb & BitboardConstants.DIAGONAL_13) != 0) return 12;
+        if ((bb & BitboardConstants.DIAGONAL_14) != 0) return 13;
+        if ((bb & BitboardConstants.DIAGONAL_15) != 0) return 14;
         throw new IllegalArgumentException("Illegal square coordinate " + sq);
     }
 
@@ -120,21 +120,21 @@ public class BoardUtils {
      */
     public static int getAntiDiagonal(int sq) {
         long bb = 1L << sq;
-        if ((bb & Bits.ANTI_DIAGONAL_MASK_1) != 0) return 0;
-        if ((bb & Bits.ANTI_DIAGONAL_MASK_2) != 0) return 1;
-        if ((bb & Bits.ANTI_DIAGONAL_MASK_3) != 0) return 2;
-        if ((bb & Bits.ANTI_DIAGONAL_MASK_4) != 0) return 3;
-        if ((bb & Bits.ANTI_DIAGONAL_MASK_5) != 0) return 4;
-        if ((bb & Bits.ANTI_DIAGONAL_MASK_6) != 0) return 5;
-        if ((bb & Bits.ANTI_DIAGONAL_MASK_7) != 0) return 6;
-        if ((bb & Bits.ANTI_DIAGONAL_MASK_8) != 0) return 7;
-        if ((bb & Bits.ANTI_DIAGONAL_MASK_9) != 0) return 8;
-        if ((bb & Bits.ANTI_DIAGONAL_MASK_10) != 0) return 9;
-        if ((bb & Bits.ANTI_DIAGONAL_MASK_11) != 0) return 10;
-        if ((bb & Bits.ANTI_DIAGONAL_MASK_12) != 0) return 11;
-        if ((bb & Bits.ANTI_DIAGONAL_MASK_13) != 0) return 12;
-        if ((bb & Bits.ANTI_DIAGONAL_MASK_14) != 0) return 13;
-        if ((bb & Bits.ANTI_DIAGONAL_MASK_15) != 0) return 14;
+        if ((bb & BitboardConstants.ANTI_DIAGONAL_MASK_1) != 0) return 0;
+        if ((bb & BitboardConstants.ANTI_DIAGONAL_MASK_2) != 0) return 1;
+        if ((bb & BitboardConstants.ANTI_DIAGONAL_MASK_3) != 0) return 2;
+        if ((bb & BitboardConstants.ANTI_DIAGONAL_MASK_4) != 0) return 3;
+        if ((bb & BitboardConstants.ANTI_DIAGONAL_MASK_5) != 0) return 4;
+        if ((bb & BitboardConstants.ANTI_DIAGONAL_MASK_6) != 0) return 5;
+        if ((bb & BitboardConstants.ANTI_DIAGONAL_MASK_7) != 0) return 6;
+        if ((bb & BitboardConstants.ANTI_DIAGONAL_MASK_8) != 0) return 7;
+        if ((bb & BitboardConstants.ANTI_DIAGONAL_MASK_9) != 0) return 8;
+        if ((bb & BitboardConstants.ANTI_DIAGONAL_MASK_10) != 0) return 9;
+        if ((bb & BitboardConstants.ANTI_DIAGONAL_MASK_11) != 0) return 10;
+        if ((bb & BitboardConstants.ANTI_DIAGONAL_MASK_12) != 0) return 11;
+        if ((bb & BitboardConstants.ANTI_DIAGONAL_MASK_13) != 0) return 12;
+        if ((bb & BitboardConstants.ANTI_DIAGONAL_MASK_14) != 0) return 13;
+        if ((bb & BitboardConstants.ANTI_DIAGONAL_MASK_15) != 0) return 14;
         throw new IllegalArgumentException("Illegal square coordinate " + sq);
     }
 

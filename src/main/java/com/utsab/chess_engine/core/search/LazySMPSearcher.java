@@ -18,14 +18,15 @@ import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 /**
- * Implementation of {@link Search} that uses a parallel search strategy called 'Lazy SMP'. The idea is to have multiple
- * threads searching the same position simultaneously, but sharing a {@link TranspositionTable}, so each thread benefits
- * from the work of the others. Each thread is simply a {@link Searcher} that runs its own iterative deepening loop.
+ * Implementation of {@link Search} using Lazy SMP (Symmetric Multi-Processing) algorithm.
+ * Employs multiple threads to search the same position concurrently while sharing a single
+ * {@link TranspositionTable}. Each thread runs an independent iterative deepening search
+ * while benefiting from entries stored in the shared table by other threads.
  *
- * @see <a href="https://www.chessprogramming.org/Lazy_SMP">Chess Programming Wiki</a>
+ * @see <a href="https://www.chessprogramming.org/Lazy_SMP">Chess Programming Wiki - Lazy SMP</a>
  */
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ParallelSearcher implements Search {
+public class LazySMPSearcher implements Search {
 
     final EngineConfig config;
     final Supplier<MoveGeneration> moveGeneratorSupplier;
@@ -39,11 +40,11 @@ public class ParallelSearcher implements Search {
 
     private List<Searcher> searchers;
 
-    public ParallelSearcher(EngineConfig config,
-                            Supplier<MoveGeneration> moveGeneratorSupplier,
-                            Supplier<MoveOrdering> moveOrdererSupplier,
-                            Supplier<Evaluation> evaluatorSupplier,
-                            TranspositionTable transpositionTable) {
+    public LazySMPSearcher(EngineConfig config,
+                           Supplier<MoveGeneration> moveGeneratorSupplier,
+                           Supplier<MoveOrdering> moveOrdererSupplier,
+                           Supplier<Evaluation> evaluatorSupplier,
+                           TranspositionTable transpositionTable) {
         this.config = config;
         this.hashSize = config.getDefaultHashSizeMb();
         this.threadCount = config.getDefaultThreadCount();
@@ -56,12 +57,12 @@ public class ParallelSearcher implements Search {
     }
 
     @Override
-    public SearchResult search(Duration duration) {
+    public SearchResult negamax(Duration duration) {
         try {
             setPosition(board);
             threadManager.reset();
             List<CompletableFuture<SearchResult>> threads = searchers.stream()
-                    .map(searcher -> CompletableFuture.supplyAsync(() -> searcher.search(duration)))
+                    .map(searcher -> CompletableFuture.supplyAsync(() -> searcher.negamax(duration)))
                     .toList();
             SearchResult result = selectResult(threads).get();
             threads.forEach(thread -> thread.cancel(true));
@@ -122,11 +123,6 @@ public class ParallelSearcher implements Search {
     public void clearHistory() {
         transpositionTable.clear();
         searchers.forEach(Searcher::clearHistory);
-    }
-
-    @Override
-    public void logStatistics() {
-
     }
 
 }

@@ -6,7 +6,7 @@ import com.utsab.chess_engine.core.evaluation.Evaluator;
 import com.utsab.chess_engine.core.generation.MoveGeneration;
 import com.utsab.chess_engine.core.generation.MoveGenerator;
 import com.utsab.chess_engine.core.opening.OpeningBook;
-import com.utsab.chess_engine.core.search.ParallelSearcher;
+import com.utsab.chess_engine.core.search.LazySMPSearcher;
 import com.utsab.chess_engine.core.search.Search;
 import com.utsab.chess_engine.core.search.moveordering.MoveOrderer;
 import com.utsab.chess_engine.core.search.moveordering.MoveOrdering;
@@ -51,7 +51,7 @@ public class EngineInitializer {
         Supplier<MoveOrdering> moveOrderer = MoveOrderer::new;
         Supplier<Evaluation> evaluator = () -> new Evaluator(config);
         TranspositionTable transpositionTable = new TranspositionTable(config.getDefaultHashSizeMb());
-        Search searcher = new ParallelSearcher(config, moveGenerator, moveOrderer, evaluator, transpositionTable);
+        Search searcher = new LazySMPSearcher(config, moveGenerator, moveOrderer, evaluator, transpositionTable);
         return new Engine(config, book, moveGenerator.get(), searcher);
     }
 

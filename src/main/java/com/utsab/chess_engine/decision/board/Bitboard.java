@@ -13,7 +13,7 @@ public class Bitboard {
     private long whitePieces;     // All white pieces
     private long blackPieces;     // All black pieces
     private boolean whiteToMove;  // Whose turn it is
-    private int castlingRights;   // Bits: KQkq (0b1111 = all available)
+    private int castlingRights;   // BitboardConstants: KQkq (0b1111 = all available)
     private int enPassantSquare;  // Square behind double pawn push, -1 if none
     private int halfMoveClock;    // Moves since last pawn move or capture
     private int fullMoveNumber;   // Incremented after Black's move

@@ -1,6 +1,6 @@
 package com.utsab.chess_engine.core.evaluation;
 
-import com.utsab.chess_engine.core.board.BitwiseOperations;
+import com.utsab.chess_engine.core.board.BitOperations;
 import com.utsab.chess_engine.core.board.Board;
 import com.utsab.chess_engine.core.board.GameState;
 import com.utsab.chess_engine.core.search.Search;
@@ -16,21 +16,6 @@ public class Result {
      */
     public static boolean isEffectiveDraw(Board board) {
         return isDoubleRepetition(board) || isFiftyMoveRule(board) || isInsufficientMaterial(board);
-    }
-
-    public static boolean isThreefoldRepetition(Board board) {
-
-        int repetitionCount = 0;
-        long zobrist = board.getGameState().getZobristKey();
-        Iterator<GameState> iterator = board.getGameStateHistory().descendingIterator();
-        while (iterator.hasNext()) {
-            GameState gameState = iterator.next();
-            if (gameState.getZobristKey() == zobrist) {
-                repetitionCount += 1;
-            }
-        }
-        return repetitionCount >= 2;
-
     }
 
     public static boolean isDoubleRepetition(Board board) {
@@ -55,8 +40,8 @@ public class Result {
         long whitePieces = board.getWhiteKnights() | board.getWhiteBishops();
         long blackPieces = board.getBlackKnights() |  board.getBlackBishops();
 
-        return (BitwiseOperations.countBits(whitePieces) == 0 || BitwiseOperations.countBits(whitePieces) == 1)
-                && (BitwiseOperations.countBits(blackPieces) == 0 || BitwiseOperations.countBits(blackPieces) == 1);
+        return (BitOperations.countBits(whitePieces) == 0 || BitOperations.countBits(whitePieces) == 1)
+                && (BitOperations.countBits(blackPieces) == 0 || BitOperations.countBits(blackPieces) == 1);
     }
 
     public static boolean isFiftyMoveRule(Board board) {
