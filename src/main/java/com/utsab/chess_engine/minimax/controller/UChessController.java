@@ -2,12 +2,14 @@ package com.utsab.chess_engine.minimax.controller;
 
 import com.utsab.chess_engine.common.BaseController;
 import com.utsab.chess_engine.game.dto.GameDto;
+import com.utsab.chess_engine.game.dto.history.HistoryResponse;
 import com.utsab.chess_engine.minimax.dto.NewGameRequest;
 import com.utsab.chess_engine.minimax.dto.UChessRequest;
 import com.utsab.chess_engine.minimax.dto.UChessResponse;
 import com.utsab.chess_engine.minimax.service.UChessService;
 import com.utsab.chess_engine.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,5 +39,11 @@ public class UChessController extends BaseController {
     public ResponseEntity<ApiResponse<GameDto>> getGameInfo(@PathVariable UUID gameId) {
         GameDto gameDto = uChessService.getGameInfo(gameId);
         return successResponse(gameDto, "Game info fetched successfully");
+    }
+
+    @GetMapping("/history")
+    public ResponseEntity<ApiResponse<HistoryResponse>> getGameHistory(Pageable pageable) {
+        HistoryResponse history = uChessService.getGameHistory(pageable);
+        return successResponse(history, "Game history fetched successfully");
     }
 }

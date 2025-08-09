@@ -14,6 +14,10 @@ import com.utsab.chess_engine.exceptions.custom.InvalidRequestException;
 import com.utsab.chess_engine.game.dto.GameDto;
 import com.utsab.chess_engine.game.dto.MoveDto;
 import com.utsab.chess_engine.game.dto.PlayerDto;
+import com.utsab.chess_engine.game.dto.history.BotResponse;
+import com.utsab.chess_engine.game.dto.history.GameStatsResponse;
+import com.utsab.chess_engine.game.dto.history.GamesResponse;
+import com.utsab.chess_engine.game.dto.history.HistoryResponse;
 import com.utsab.chess_engine.game.entity.Game;
 import com.utsab.chess_engine.game.entity.enums.GameResult;
 import com.utsab.chess_engine.game.repository.GameRepository;
@@ -29,6 +33,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -282,6 +288,71 @@ public class UChessServiceImplementation implements UChessService {
                 null,
                 currentTurn
         );
+    }
+
+    @Override
+    public HistoryResponse getGameHistory(Pageable pageable) {
+        UserEntity currentUser = loggedInUserUtil.getLoggedInUser();
+
+        Page<Game> games = gameRepository.findByWhitePlayerIdOrBlackPlayerIdOrderByStartTimeDesc(
+                currentUser.getId(), currentUser.getId(), pageable);
+
+        Page<GamesResponse> gamesResponses = games.map(game -> {
+            String playerColor = game.getWhitePlayer().getId().equals(currentUser.getId()) ?
+                    "WHITE" : "BLACK";
+            Player opponent = playerColor.equals("WHITE") ?
+                    game.getBlackPlayer() : game.getWhitePlayer();
+
+            BotResponse botResponse = null;
+            if ("BOT".equals(getPlayerType(opponent))) {
+                Bots bot = botRepository.findById(opponent.getId())
+                        .orElse(null);
+                if (bot != null) {
+                    botResponse = new BotResponse(bot);
+                }
+            }
+
+            return new GamesResponse(
+                    game.getId().toString(),
+                    game.getGameType().name(),
+                    getPlayerName(game.getWhitePlayer()),
+                    getPlayerName(game.getBlackPlayer()),
+                    game.getStartTime().toString(),
+                    game.getEndTime() != null ? game.getEndTime().toString() : null,
+                    game.getResult().name(),
+                    game.getMoveEntities().size(),
+                    playerColor,
+                    botResponse
+            );
+        });
+
+        // Calculate game statistics
+        long totalGames = games.getTotalElements();
+        long totalWins = games.stream().filter(game -> {
+            boolean isWhite = game.getWhitePlayer().getId().equals(currentUser.getId());
+            return (isWhite && game.getResult() == GameResult.WHITE_WIN) ||
+                    (!isWhite && game.getResult() == GameResult.BLACK_WIN);
+        }).count();
+        long totalLosses = games.stream().filter(game -> {
+            boolean isWhite = game.getWhitePlayer().getId().equals(currentUser.getId());
+            return (isWhite && game.getResult() == GameResult.BLACK_WIN) ||
+                    (!isWhite && game.getResult() == GameResult.WHITE_WIN);
+        }).count();
+        long totalDraws = games.stream().filter(game ->
+                game.getResult() == GameResult.DRAW_BY_REPETITION ||
+                        game.getResult() == GameResult.DRAW_BY_FIFTY_MOVE_RULE ||
+                        game.getResult() == GameResult.DRAW_BY_INSUFFICIENT_MATERIAL ||
+                        game.getResult() == GameResult.DRAW_BY_STALEMATE
+        ).count();
+
+        GameStatsResponse stats = new GameStatsResponse(
+                (int) totalGames,
+                (int) totalWins,
+                (int) totalLosses,
+                (int) totalDraws
+        );
+
+        return new HistoryResponse(stats, gamesResponses);
     }
 
     /**

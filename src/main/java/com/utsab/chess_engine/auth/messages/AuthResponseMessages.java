@@ -7,6 +7,7 @@ public class AuthResponseMessages {
     public static final String EMAIL_VERIFIED = "Email verified successfully";
     public static final String EMAIL_ALREADY_VERIFIED = "Email is already verified";
     public static final String VERIFICATION_EMAIL_RESENT = "Verification email resent successfully";
+    public static final String CURRENT_USER_FETCHED = "Current user fetched successfully";
 
     private AuthResponseMessages() {}
     public static final String USER_AUTHENTICATED = "User authenticated successfully";

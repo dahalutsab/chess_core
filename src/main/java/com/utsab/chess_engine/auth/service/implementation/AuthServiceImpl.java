@@ -26,6 +26,7 @@ import com.utsab.chess_engine.user.role.entity.UserRole;
 import com.utsab.chess_engine.user.role.repository.RolesRepository;
 import com.utsab.chess_engine.util.file.FileHandlerUtil;
 import com.utsab.chess_engine.util.file.FileType;
+import com.utsab.chess_engine.util.logged_in_user.LoggedInUserUtil;
 import com.utsab.chess_engine.util.validator.EmailValidator;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -61,6 +62,7 @@ public class AuthServiceImpl implements AuthService {
     private final RolesRepository rolesRepository;
     private final OTPService otpService;
     private final MailService mailService;
+    private final LoggedInUserUtil loggedInUserUtil;
 
     @Value("${frontend.domain}")
     private String frontEndUrl;
@@ -265,5 +267,11 @@ public class AuthServiceImpl implements AuthService {
         mailService.sendRegistrationMail(user, otp, frontEndUri);
 
         return new UserRegistrationResponse(userInfoRepository.save(user), otp.getExpiryTime());
+    }
+
+    @Override
+    public UserRegistrationResponse getLoggedInUser() {
+        UserEntity userEntity = loggedInUserUtil.getLoggedInUser();
+        return new UserRegistrationResponse(userEntity);
     }
 }

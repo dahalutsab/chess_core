@@ -3,6 +3,7 @@ package com.utsab.chess_engine.user.controller;
 import com.utsab.chess_engine.auth.dto.response.UserRegistrationResponse;
 import com.utsab.chess_engine.common.BaseController;
 import com.utsab.chess_engine.response.ApiResponse;
+import com.utsab.chess_engine.user.dto.request.UserUpdateRequest;
 import com.utsab.chess_engine.user.messages.UserSwaggerDocumentationMessage;
 import com.utsab.chess_engine.user.service.UserService;
 import com.utsab.chess_engine.util.messages.ResponseMessageUtil;
@@ -10,10 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import static com.utsab.chess_engine.user.messages.UserAPIConstants.API_USER;
 
@@ -37,7 +35,6 @@ public class UserController extends BaseController {
         return successResponse(userService.getLoggedInUser(), ResponseMessageUtil.fetchedSuccessfully(USER));
     }
 
-    //getUserById
     @Operation(
             summary = UserSwaggerDocumentationMessage.GET_USER_BY_ID_SUMMARY,
             description = UserSwaggerDocumentationMessage.GET_USER_BY_ID_DESCRIPTION
@@ -47,4 +44,13 @@ public class UserController extends BaseController {
         return successResponse(userService.getUserById(userId), ResponseMessageUtil.fetchedSuccessfully(USER));
     }
 
+    //update user details
+    @Operation(
+            summary = UserSwaggerDocumentationMessage.UPDATE_USER_SUMMARY,
+            description = UserSwaggerDocumentationMessage.UPDATE_USER_DESCRIPTION
+    )
+     @PutMapping
+    public ResponseEntity<ApiResponse<UserRegistrationResponse>> updateUser(@ModelAttribute UserUpdateRequest request) {
+        return successResponse(userService.updateUser(request), ResponseMessageUtil.updatedSuccessfully(USER));
+    }
 }

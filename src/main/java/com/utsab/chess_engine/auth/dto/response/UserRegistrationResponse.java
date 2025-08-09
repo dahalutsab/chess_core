@@ -22,6 +22,7 @@ public class UserRegistrationResponse {
     URI profilePicture;
     List<RolesResponse> userRole;
     LocalDateTime otpExpiryTime;
+    LocalDateTime createdAt;
 
     public UserRegistrationResponse(UserEntity user) {
         this.id = user.getId();
@@ -31,6 +32,7 @@ public class UserRegistrationResponse {
         this.userRole = user.getRoles().stream()
                 .map(RolesResponse::new)
                 .toList();
+        this.createdAt = user.getCreatedDate();
     }
 
     public UserRegistrationResponse(UserEntity user, LocalDateTime otpExpiryTime) {

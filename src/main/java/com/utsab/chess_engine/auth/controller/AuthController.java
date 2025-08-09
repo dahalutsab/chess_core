@@ -122,4 +122,15 @@ public class AuthController extends BaseController {
         return successResponse(authService.resetPassword(resetPasswordRequest),
                 AuthResponseMessages.PASSWORD_RESET_SUCCESSFULLY);
     }
+
+    //current user
+    @Operation(
+            summary = "Get current user",
+            description = "Fetches the details of the currently authenticated user."
+    )
+    @GetMapping("/current-user")
+    public ResponseEntity<ApiResponse<UserRegistrationResponse>> getCurrentUser() {
+        return successResponse(authService.getLoggedInUser(),
+                AuthResponseMessages.CURRENT_USER_FETCHED);
+    }
 }

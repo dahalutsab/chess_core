@@ -25,4 +25,6 @@ public interface AuthService {
     String verifyEmail(String email, String token);
 
     UserRegistrationResponse resendVerificationEmail(String email);
+
+    UserRegistrationResponse getLoggedInUser();
 }
