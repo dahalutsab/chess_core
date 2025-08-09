@@ -15,4 +15,5 @@ public class UChessResponse {
     private String fen;
     private String bestMove;
     private String bestMoveSan;
+    private String result;
 }

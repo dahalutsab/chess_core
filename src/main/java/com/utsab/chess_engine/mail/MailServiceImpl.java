@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
+import java.io.File;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -65,7 +66,14 @@ public class MailServiceImpl implements MailService {
             helper.setFrom("no-reply@uchess.com");
             helper.setTo(to);
             helper.setSubject(subject);
-            helper.setText(content, true);
+            helper.setText(content, true); // true = isHtml
+
+            // 1. Embed the image inline (from classpath or file)
+            File imageFile = new File("src/main/resources/static/images/uchess.png"); // Adjust path if needed
+            helper.addInline("uchessLogo", imageFile);
+
+            // Optional: Also attach the image (or any file)
+//            helper.addAttachment("uchess-logo.png", imageFile);
 
             javaMailSender.send(message);
         } catch (MessagingException e) {

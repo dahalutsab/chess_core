@@ -5,6 +5,7 @@ import com.utsab.chess_engine.bot.repository.BotRepository;
 import com.utsab.chess_engine.common.entity.Player;
 import com.utsab.chess_engine.core.UChessEngineUCI;
 import com.utsab.chess_engine.core.board.Move;
+import com.utsab.chess_engine.core.evaluation.Result;
 import com.utsab.chess_engine.core.search.SearchResult;
 import com.utsab.chess_engine.core.utils.notation.FEN;
 import com.utsab.chess_engine.core.utils.notation.Notation;
@@ -192,6 +193,50 @@ public class UChessServiceImplementation implements UChessService {
         String bestMove = Notation.toNotation(result.move());
         String bestMoveSan = SAN.toSan(result.move(), UChessEngineUCI.ENGINE.getBoard());
 
+        // First check if there's a result before the bot's move
+        String gameResult = null;
+        if (Result.isDoubleRepetition(UChessEngineUCI.ENGINE.getBoard())) {
+            gameResult = "DRAW_BY_REPETITION";
+        } else if (Result.isFiftyMoveRule(UChessEngineUCI.ENGINE.getBoard())) {
+            gameResult = "DRAW_BY_FIFTY_MOVE_RULE";
+        } else if (Result.isInsufficientMaterial(UChessEngineUCI.ENGINE.getBoard())) {
+            gameResult = "DRAW_BY_INSUFFICIENT_MATERIAL";
+        } else if (UChessEngineUCI.ENGINE.getMoveGenerator().generateMoves(UChessEngineUCI.ENGINE.getBoard()).isEmpty()) {
+            if (UChessEngineUCI.ENGINE.getMoveGenerator().isCheck(UChessEngineUCI.ENGINE.getBoard(),
+                    UChessEngineUCI.ENGINE.getBoard().isWhiteToMove())) {
+                gameResult = UChessEngineUCI.ENGINE.getBoard().isWhiteToMove() ? "BLACK_WIN" : "WHITE_WIN";
+            } else {
+                gameResult = "STALEMATE";
+            }
+        }
+
+        // If no result yet, apply the bot's move and check again
+        if (gameResult == null) {
+            Move move = Notation.fromCombinedNotation(bestMove);
+            UChessEngineUCI.ENGINE.getBoard().makeMove(move);
+
+            if (Result.isDoubleRepetition(UChessEngineUCI.ENGINE.getBoard())) {
+                gameResult = "DRAW_BY_REPETITION";
+            } else if (Result.isFiftyMoveRule(UChessEngineUCI.ENGINE.getBoard())) {
+                gameResult = "DRAW_BY_FIFTY_MOVE_RULE";
+            } else if (Result.isInsufficientMaterial(UChessEngineUCI.ENGINE.getBoard())) {
+                gameResult = "DRAW_BY_INSUFFICIENT_MATERIAL";
+            } else if (UChessEngineUCI.ENGINE.getMoveGenerator().generateMoves(UChessEngineUCI.ENGINE.getBoard()).isEmpty()) {
+                if (UChessEngineUCI.ENGINE.getMoveGenerator().isCheck(UChessEngineUCI.ENGINE.getBoard(),
+                        UChessEngineUCI.ENGINE.getBoard().isWhiteToMove())) {
+                    gameResult = UChessEngineUCI.ENGINE.getBoard().isWhiteToMove() ? "BLACK_WIN" : "WHITE_WIN";
+                } else {
+                    gameResult = "STALEMATE";
+                }
+            }
+        }
+
+        // Update game result if needed
+        if (gameResult != null) {
+            game.setResult(GameResult.valueOf(gameResult));
+            game.setEndTime(LocalDateTime.now());
+        }
+
         float moveNumber = calculateMoveNumber(game.getMoveEntities().size() + 1);
         MoveEntity moveEntity = MoveEntity.builder()
                 .game(game)
@@ -201,7 +246,7 @@ public class UChessServiceImplementation implements UChessService {
         game.getMoveEntities().add(moveEntity);
         gameRepository.save(game);
 
-        return new UChessResponse(gameId, fen, bestMove, bestMoveSan);
+        return new UChessResponse(gameId, fen, bestMove, bestMoveSan, gameResult);
     }
 
     /**
