@@ -1,11 +1,10 @@
-package com.utsab.chess_engine.minimax.service;
+package com.utsab.chess_engine.negamax.service;
 
 import com.utsab.chess_engine.game.dto.GameDto;
 import com.utsab.chess_engine.game.dto.history.HistoryResponse;
-import com.utsab.chess_engine.minimax.dto.NewGameRequest;
-import com.utsab.chess_engine.minimax.dto.UChessRequest;
-import com.utsab.chess_engine.minimax.dto.UChessResponse;
-import org.springframework.data.domain.Page;
+import com.utsab.chess_engine.negamax.dto.NewGameRequest;
+import com.utsab.chess_engine.negamax.dto.UChessRequest;
+import com.utsab.chess_engine.negamax.dto.UChessResponse;
 import org.springframework.data.domain.Pageable;
 
 import java.util.UUID;

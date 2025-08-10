@@ -1,4 +1,4 @@
-package com.utsab.chess_engine.minimax.service.impl;
+package com.utsab.chess_engine.negamax.service.impl;
 
 import com.utsab.chess_engine.bot.entity.Bots;
 import com.utsab.chess_engine.bot.repository.BotRepository;
@@ -21,11 +21,11 @@ import com.utsab.chess_engine.game.dto.history.HistoryResponse;
 import com.utsab.chess_engine.game.entity.Game;
 import com.utsab.chess_engine.game.entity.enums.GameResult;
 import com.utsab.chess_engine.game.repository.GameRepository;
-import com.utsab.chess_engine.minimax.dto.NewGameRequest;
-import com.utsab.chess_engine.minimax.dto.PreferredColor;
-import com.utsab.chess_engine.minimax.dto.UChessRequest;
-import com.utsab.chess_engine.minimax.dto.UChessResponse;
-import com.utsab.chess_engine.minimax.service.UChessService;
+import com.utsab.chess_engine.negamax.dto.NewGameRequest;
+import com.utsab.chess_engine.negamax.dto.PreferredColor;
+import com.utsab.chess_engine.negamax.dto.UChessRequest;
+import com.utsab.chess_engine.negamax.dto.UChessResponse;
+import com.utsab.chess_engine.negamax.service.UChessService;
 import com.utsab.chess_engine.move.entity.MoveEntity;
 import com.utsab.chess_engine.user.entity.UserEntity;
 import com.utsab.chess_engine.util.logged_in_user.LoggedInUserUtil;

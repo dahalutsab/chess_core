@@ -22,7 +22,7 @@ public record GameDto(
         LocalDateTime endTime,
         GameResult result,
         List<MoveDto> moves,
-        com.utsab.chess_engine.minimax.dto.UChessResponse botMove,
+        com.utsab.chess_engine.negamax.dto.UChessResponse botMove,
         String currentTurn
 ) {}
 

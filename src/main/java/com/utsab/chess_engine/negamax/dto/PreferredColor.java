@@ -1,4 +1,4 @@
-package com.utsab.chess_engine.minimax.dto;
+package com.utsab.chess_engine.negamax.dto;
 
 public enum PreferredColor {
     WHITE,
