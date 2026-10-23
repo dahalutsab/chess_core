@@ -5,7 +5,6 @@ import com.utsab.chess_engine.core.board.Board;
 import com.utsab.chess_engine.core.board.GameState;
 import com.utsab.chess_engine.core.search.Search;
 
-import java.util.Iterator;
 
 public class Result {
 
@@ -19,17 +18,34 @@ public class Result {
     }
 
     public static boolean isDoubleRepetition(Board board) {
+        return countRepetitions(board, 1) >= 1;
+    }
 
+    /**
+     * Check for a draw by threefold repetition, i.e. the current position has occurred at least twice before. This is
+     * the actual rule of the game, and should be used to adjudicate game results.
+     */
+    public static boolean isThreefoldRepetition(Board board) {
+        return countRepetitions(board, 2) >= 2;
+    }
+
+    /**
+     * Count the previous occurrences of the current position, stopping once {@code limit} have been found. Only
+     * positions since the last capture or pawn move can repeat, and only every second ply has the same side to move,
+     * so the scan is bounded by the fifty-move counter rather than the full game history.
+     */
+    private static int countRepetitions(Board board, int limit) {
         long zobrist = board.getGameState().getZobristKey();
-        Iterator<GameState> iterator = board.getGameStateHistory().descendingIterator();
-        while (iterator.hasNext()) {
-            GameState gameState = iterator.next();
-            if (gameState.getZobristKey() == zobrist) {
-                return true;
-            }
+        int reversiblePlies = board.getGameState().getFiftyMoveCounter();
+        int count = 0;
+        int pliesAgo = 0;
+        // The history is a stack, so iteration starts from the most recent position
+        for (GameState gameState : board.getGameStateHistory()) {
+            pliesAgo++;
+            if (pliesAgo > reversiblePlies) break;
+            if ((pliesAgo & 1) == 0 && gameState.getZobristKey() == zobrist && ++count >= limit) break;
         }
-        return false;
-
+        return count;
     }
 
     public static boolean isInsufficientMaterial(Board board) {

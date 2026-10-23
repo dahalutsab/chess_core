@@ -5,7 +5,20 @@ import com.utsab.chess_engine.core.utils.BoardUtils;
 public class RayCalculator {
 
     /**
-     * Calculates the ray (bitboard) between two squares on the chessboard.
+     * Precomputed rays between every pair of squares, so that lookups during move generation are a single array read.
+     */
+    private static final long[][] RAYS_BETWEEN = new long[64][64];
+
+    static {
+        for (int startSquare = 0; startSquare < 64; startSquare++) {
+            for (int endSquare = 0; endSquare < 64; endSquare++) {
+                RAYS_BETWEEN[startSquare][endSquare] = computeRayBetween(startSquare, endSquare);
+            }
+        }
+    }
+
+    /**
+     * Retrieves the ray (bitboard) between two squares on the chessboard from the precomputed table.
      *
      * @param startSquare The starting square index (0-63).
      * @param endSquare The ending square index (0-63).
@@ -13,6 +26,18 @@ public class RayCalculator {
      *         or 0L if there is no valid ray.
      */
     public long rayBetween(int startSquare, int endSquare) {
+        return RAYS_BETWEEN[startSquare][endSquare];
+    }
+
+    /**
+     * Calculates the ray (bitboard) between two squares on the chessboard.
+     *
+     * @param startSquare The starting square index (0-63).
+     * @param endSquare The ending square index (0-63).
+     * @return A bitboard representing the ray between the start and end squares,
+     *         or 0L if there is no valid ray.
+     */
+    private static long computeRayBetween(int startSquare, int endSquare) {
         // Check for valid square indices and that the squares are not the same
         if (!BoardUtils.isValidIndex(startSquare) || !BoardUtils.isValidIndex(endSquare) || startSquare == endSquare) {
             return 0L;
@@ -46,7 +71,7 @@ public class RayCalculator {
      * @return The direction offset to traverse from startSquare to endSquare,
      *         or 0 if there is no valid direction.
      */
-    private int getDirectionOffset(int startSquare, int endSquare) {
+    private static int getDirectionOffset(int startSquare, int endSquare) {
         int startRank = BoardUtils.getRank(startSquare);
         int endRank = BoardUtils.getRank(endSquare);
         int startFile = BoardUtils.getFile(startSquare);

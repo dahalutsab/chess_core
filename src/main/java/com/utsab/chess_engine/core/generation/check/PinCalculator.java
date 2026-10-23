@@ -9,7 +9,8 @@ public class PinCalculator {
     private final RayCalculator rayCalculator = new RayCalculator();
 
     private long pinMask;
-    private long[] pinRayMasks;
+    // Reused between calls: entries are only read for squares in the current pinMask, so stale values are harmless.
+    private final long[] pinRayMasks = new long[64];
 
     public record PinData(long pinMask, long[] pinRayMasks) {}
 
@@ -22,7 +23,6 @@ public class PinCalculator {
      */
     public PinData calculatePinMask(Board board, boolean isWhite) {
         pinMask = 0L;
-        pinRayMasks = new long[64];
 
         int kingSquare = BitOperations.getNextBit(board.getKing(isWhite));
         long friendlies = board.getPieces(isWhite);

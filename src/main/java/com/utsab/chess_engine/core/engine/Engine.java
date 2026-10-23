@@ -299,8 +299,9 @@ public class Engine {
             return new SearchResult(0, bookMove, 0, 0, 0, 0);
         }
         stopThinking();
-        think = CompletableFuture.supplyAsync(() -> think(thinkTimeMs));
-        return think.join();
+        // Search on the calling thread: handing off to the common pool and joining adds latency and occupies a
+        // common-pool worker for the whole search.
+        return think(thinkTimeMs);
     }
 
     public String getInitialFen() {

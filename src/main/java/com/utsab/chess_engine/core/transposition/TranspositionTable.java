@@ -5,25 +5,35 @@ import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 
 import java.util.Arrays;
-import java.util.Objects;
 
 /**
  * A transposition table that stores search results for previously evaluated chess positions, including evaluation scores,
  * best moveEntities, search depths, and hash flags. By caching results, it reduces redundant evaluations for positions reached
  * via different move orders, significantly optimizing the search tree in a UCI-compatible chess engine.
+ * <p>
+ * Entries are stored in a flat primitive array rather than as objects, so storing a result never allocates. Each
+ * entry's key and value are interleaved, so that a whole bucket sits in one or two adjacent cache lines and a probe
+ * costs a single memory access. The table is shared lock-free between Lazy SMP threads: each key is stored
+ * XOR-ed with its value, so a torn write from a concurrent thread simply fails verification and reads as a miss.
  *
  * @author Utsab Dahal
- * @version 1.0
+ * @version 1.1
  * @since 2025
  * @see <a href="https://www.chessprogramming.org/Transposition_Table">Chess Programming Wiki - Transposition Table</a>
+ * @see <a href="https://www.chessprogramming.org/Shared_Hash_Table#Lock-less">Chess Programming Wiki - Lock-less hashing</a>
  */
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class TranspositionTable {
 
     /**
-     * Size of each hash entry in bytes (32 bytes).
+     * Size of each hash entry in bytes (8-byte key + 8-byte value + 1-byte age).
      */
-    static final int ENTRY_SIZE_BYTES = 32;
+    static final int ENTRY_SIZE_BYTES = 17;
+
+    /**
+     * Number of entries probed per bucket.
+     */
+    static final int BUCKET_SIZE = 4;
 
     /**
      * Threshold for checkmate scores (±1,000,000 - 256).
@@ -31,24 +41,30 @@ public class TranspositionTable {
     static final int CHECKMATE_BOUND = 1_000_000 - 256;
 
     /**
-     * Number of entries in the table, calculated from memory size.
+     * Number of entries in the table, calculated from memory size and rounded down to a whole number of buckets.
      */
     final int tableSize;
 
     /**
-     * Array of hash entries, indexed by Zobrist key.
+     * Number of buckets in the table.
      */
-    HashEntry[] entries;
+    final int bucketCount;
 
     /**
-     * Number of table lookup attempts.
+     * Interleaved entries: at {@code 2 * i} the Zobrist key XOR-ed with the value (for lock-less verification), and at
+     * {@code 2 * i + 1} the packed entry value (score, move, flag, depth), see {@link HashEntry}.
      */
-    int tries;
+    final long[] entries;
 
     /**
-     * Number of successful table hits.
+     * The search generation in which each entry was last written. Entries from older searches are replaced first.
      */
-    int hits;
+    final byte[] ages;
+
+    /**
+     * The current search generation.
+     */
+    volatile byte currentAge;
 
     /**
      * Constructs a transposition table with the specified size.
@@ -56,8 +72,11 @@ public class TranspositionTable {
      * @param tableSizeMb the table size in megabytes
      */
     public TranspositionTable(int tableSizeMb) {
-        this.tableSize = (tableSizeMb * 1024 * 1024) / ENTRY_SIZE_BYTES;
-        entries = new HashEntry[tableSize];
+        long entries = ((long) tableSizeMb * 1024 * 1024) / ENTRY_SIZE_BYTES;
+        this.bucketCount = (int) Math.max(1, Math.min(entries, Integer.MAX_VALUE - BUCKET_SIZE) / BUCKET_SIZE);
+        this.tableSize = bucketCount * BUCKET_SIZE;
+        this.entries = new long[2 * tableSize];
+        this.ages = new byte[tableSize];
     }
 
     /**
@@ -69,14 +88,12 @@ public class TranspositionTable {
      */
     public HashEntry get(long zobristKey, int ply) {
         int index = getIndex(zobristKey);
-        tries++;
-        for (int i = 0; i < 4; i++) {
-            HashEntry entry = entries[index + i];
-            if (entry != null && entry.key() == zobristKey) {
-                hits++;
+        for (int i = index; i < index + BUCKET_SIZE; i++) {
+            long value = entries[2 * i + 1];
+            if (value != 0 && (entries[2 * i] ^ value) == zobristKey) {
+                HashEntry entry = new HashEntry(zobristKey, value);
                 if (isMateScore(entry.getScore())) {
-                    int score = retrieveMateScore(entry.getScore(), ply);
-                    entry = HashEntry.withScore(entry, score);
+                    entry = HashEntry.withScore(entry, retrieveMateScore(entry.getScore(), ply));
                 }
                 return entry;
             }
@@ -85,58 +102,74 @@ public class TranspositionTable {
     }
 
     /**
-     * Stores a new hash entry in the table, using a replacement strategy based on depth.
+     * Stores a new hash entry in the table, using a replacement strategy based on depth and age.
      *
      * @param zobristKey the Zobrist key of the position
      * @param flag the hash flag
      * @param depth the search depth
      * @param ply the current ply from the root
-     * @param move the best move, or null
+     * @param move the best move found, or null
      * @param score the evaluation score
      */
     public void put(long zobristKey, HashFlag flag, int depth, int ply, Move move, int score) {
         int startIndex = getIndex(zobristKey);
         if (isMateScore(score)) score = calculateMateScore(score, ply);
-        HashEntry newEntry = HashEntry.of(zobristKey, score, move, flag, depth);
+        byte age = currentAge;
 
-        int replacedIndex = -1;
-        int minDepth = Integer.MAX_VALUE;
+        int replacedIndex = startIndex;
+        int worstPriority = Integer.MAX_VALUE;
 
-        for (int i = startIndex; i < startIndex + 4; i++) {
-            HashEntry storedEntry = entries[i];
+        for (int i = startIndex; i < startIndex + BUCKET_SIZE; i++) {
+            long storedValue = entries[2 * i + 1];
 
-            if (storedEntry == null || storedEntry.key() == zobristKey) {
-                if (storedEntry == null || depth >= storedEntry.getDepth()) {
-                    if (newEntry.getMove() == null && storedEntry != null && storedEntry.getMove() != null) {
-                        newEntry = HashEntry.of(newEntry.key(), newEntry.getScore(), storedEntry.getMove(), newEntry.getFlag(), newEntry.getDepth());
-                    }
-                    replacedIndex = i;
-                    break;
-                } else {
-                    return;
-                }
+            if (storedValue == 0) {
+                replacedIndex = i;
+                break;
             }
 
-            if (storedEntry.getDepth() < minDepth) {
-                minDepth = storedEntry.getDepth();
+            if ((entries[2 * i] ^ storedValue) == zobristKey) {
+                HashEntry storedEntry = new HashEntry(zobristKey, storedValue);
+                // Keep a deeper result from the current search for the same position
+                if (depth < storedEntry.getDepth() && ages[i] == age && flag != HashFlag.EXACT) {
+                    return;
+                }
+                // Preserve the stored best move if we don't have one
+                if (move == null) {
+                    move = storedEntry.getMove();
+                }
+                replacedIndex = i;
+                break;
+            }
+
+            // Prefer replacing entries from previous searches, then the shallowest entries
+            int priority = new HashEntry(0, storedValue).getDepth() + (ages[i] == age ? 1024 : 0);
+            if (priority < worstPriority) {
+                worstPriority = priority;
                 replacedIndex = i;
             }
         }
 
-        if (replacedIndex != -1) {
-            entries[replacedIndex] = newEntry;
-        }
+        long value = HashEntry.of(zobristKey, score, move, flag, depth).value();
+        entries[2 * replacedIndex + 1] = value;
+        entries[2 * replacedIndex] = zobristKey ^ value;
+        ages[replacedIndex] = age;
     }
 
     /**
-     * Clears the hash table, resetting entries and statistics.
+     * Marks the start of a new search, so that entries written by previous searches become preferred for replacement.
+     */
+    public void incrementAge() {
+        currentAge++;
+    }
+
+    /**
+     * Clears the hash table, resetting all entries.
      *
      */
     public void clear() {
-        printStatistics();
-        tries = 0;
-        hits = 0;
-        entries = new HashEntry[tableSize];
+        Arrays.fill(entries, 0L);
+        Arrays.fill(ages, (byte) 0);
+        currentAge = 0;
     }
 
     /**
@@ -146,8 +179,9 @@ public class TranspositionTable {
      * @return the starting index for the bucket
      */
     private int getIndex(long zobristKey) {
-        long index = (zobristKey ^ (zobristKey >>> 32)) & 0x7FFFFFFF;
-        return (int) (index % (tableSize - 3)) & ~3;
+        // Map the upper 32 bits of the key onto the bucket range without a modulo
+        long bucket = ((zobristKey >>> 32) * bucketCount) >>> 32;
+        return (int) bucket * BUCKET_SIZE;
     }
 
     /**
@@ -183,14 +217,12 @@ public class TranspositionTable {
     }
 
     /**
-     * Prints statistics about table usage, including fill percentage and hit rate.
+     * Prints statistics about table usage, including fill percentage.
      *
      */
     public void printStatistics() {
-        long fill = Arrays.stream(entries).filter(Objects::nonNull).count();
+        long fill = java.util.stream.IntStream.range(0, tableSize).filter(i -> entries[2 * i + 1] != 0).count();
         float fillPercentage = ((float) fill / tableSize) * 100;
-        float hitPercentage = tries > 0 ? ((float) hits / tries) * 100 : 0;
-        //System.out.printf("TT %s -- size: %d / %d (%.2f%%), tries: %d, hits: %d (%.2f%%)%n",
-        //    this.hashCode(), fill, entries.length, fillPercentage, tries, hits, hitPercentage);
+        System.out.printf("TT %s -- size: %d / %d (%.2f%%)%n", this.hashCode(), fill, tableSize, fillPercentage);
     }
 }

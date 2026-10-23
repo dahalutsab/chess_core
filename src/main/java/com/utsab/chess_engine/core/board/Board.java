@@ -419,10 +419,8 @@ public class Board {
      * @return true if there are knights, bishops or rooks or queens remaining, false otherwise
      */
     public boolean hasPiecesRemaining(boolean isWhite) {
-        if (isWhite && BitOperations.countBits(whiteKnights) > 0 || BitOperations.countBits(whiteBishops) > 0 ||
-                BitOperations.countBits(whiteRooks) > 0 || BitOperations.countBits(whiteQueens) > 0) {
-            return true;
-        } else return BitOperations.countBits(blackKnights) > 0 || BitOperations.countBits(blackBishops) > 0 ||
-                BitOperations.countBits(blackRooks) > 0 || BitOperations.countBits(blackQueens) > 0;
+        return isWhite
+                ? (whiteKnights | whiteBishops | whiteRooks | whiteQueens) != 0
+                : (blackKnights | blackBishops | blackRooks | blackQueens) != 0;
     }
 }

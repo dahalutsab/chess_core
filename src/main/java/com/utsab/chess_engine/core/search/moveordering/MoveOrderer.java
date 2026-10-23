@@ -34,8 +34,9 @@ public class MoveOrderer implements MoveOrdering {
     private static final int UNDER_PROMOTION_BIAS = 3 * MILLION;
     private static final int CASTLING_BIAS = 2 * MILLION;
 
-    private static final int MAX_KILLER_MOVE_PLY_DEPTH = 32;
+    private static final int MAX_KILLER_MOVE_PLY_DEPTH = 64;
     private static final int MAX_KILLER_MOVES_PER_PLY = 3;
+    private static final int MAX_HISTORY_SCORE = MILLION / 2;
 
     public static final int[][] MVV_LVA_TABLE = new int[][]{
             new int[]{15, 14, 13, 12, 11, 10},  // victim P, attacker P, N, B, R, Q, K
@@ -184,12 +185,31 @@ public class MoveOrderer implements MoveOrdering {
         int colourIndex = BoardUtils.getColourIndex(isWhite);
         int startSquare = historyMove.getStartSquare();
         int endSquare = historyMove.getEndSquare();
-        int score = plyRemaining * plyRemaining;
+        // Accumulate, so that moves which repeatedly cause cut-offs rank above a move that did so once
+        int score = historyMoves[colourIndex][startSquare][endSquare] + plyRemaining * plyRemaining;
         historyMoves[colourIndex][startSquare][endSquare] = score;
+        if (score > MAX_HISTORY_SCORE) {
+            // Keep history scores well below the next move ordering bias
+            ageHistory();
+        }
     }
 
     public void clear() {
         killerMoves = new Move[MAX_KILLER_MOVE_PLY_DEPTH][MAX_KILLER_MOVES_PER_PLY];
+        ageHistory();
+    }
+
+    /**
+     * Halves all history scores, so that recent cut-offs outweigh older ones.
+     */
+    private void ageHistory() {
+        for (int[][] colourHistory : historyMoves) {
+            for (int[] squareHistory : colourHistory) {
+                for (int i = 0; i < squareHistory.length; i++) {
+                    squareHistory[i] >>= 1;
+                }
+            }
+        }
     }
 
 }
