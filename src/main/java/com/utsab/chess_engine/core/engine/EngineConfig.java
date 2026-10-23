@@ -28,7 +28,9 @@ public class EngineConfig {
 
     @Bean
     public Engine engine() {
-        return EngineInitializer.loadEngine();
+        // Share the one engine instance rather than building a second one, whose hash table and search threads would
+        // double the engine's memory use without ever being used
+        return com.utsab.chess_engine.core.UChessEngineUCI.ENGINE;
     }
 
     /**

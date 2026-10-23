@@ -7,10 +7,15 @@ services:
       - "8181:8181"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+    # The JVM sizes its heap from this limit (see JAVA_OPTS in the Dockerfile)
+    mem_limit: 512m
+    # The engine runs one search thread per CPU, each with its own caches; two are plenty for the bots
+    cpus: "2"
     volumes:
+      # Uploaded files (e.g. bot avatars) live in /data inside the container
       - type: bind
         source: D:/chess_engine
-        target: /windows_chess_engine
+        target: /data
     depends_on:
       - postgres
     profiles:
