@@ -1,6 +1,7 @@
 package com.utsab.chess_engine.exceptions;
 
 import com.utsab.chess_engine.common.BaseController;
+import com.utsab.chess_engine.exceptions.custom.InvalidRequestException;
 import com.utsab.chess_engine.exceptions.custom.ResourceNotFoundException;
 import com.utsab.chess_engine.response.ApiResponse;
 import org.springframework.http.HttpStatus;
@@ -42,6 +43,12 @@ public class GlobalExceptionHandler extends BaseController {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleResourceNotFoundException(ResourceNotFoundException ex) {
         return errorResponse(ex.getMessage(), "ERR-404", "The requested resource was not found", HttpStatus.NOT_FOUND);
+    }
+
+    // Handle InvalidRequestException (Custom Exception), e.g. an illegal move or a move in a finished game
+    @ExceptionHandler(InvalidRequestException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidRequestException(InvalidRequestException ex) {
+        return errorResponse(ex.getMessage(), "ERR-400", ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     // Handle ResponseStatusException

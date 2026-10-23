@@ -23,6 +23,8 @@ public record GameDto(
         GameResult result,
         List<MoveDto> moves,
         com.utsab.chess_engine.negamax.dto.UChessResponse botMove,
-        String currentTurn
+        String currentTurn,
+        ClockDto clock,
+        String termination
 ) {}
 

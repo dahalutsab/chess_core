@@ -90,6 +90,31 @@ public class Game extends Auditable {
     GameType gameType = GameType.PVB;
 
     /**
+     * How the game ended when it isn't implied by the result, e.g. {@link com.utsab.chess_engine.game.clock.GameClock#TIMEOUT}.
+     * Kept separate from {@link GameResult} so that existing databases (whose result column has a check constraint
+     * listing the enum values) need no migration.
+     */
+    @Column(name = "termination")
+    String termination;
+
+    // Clock state for timed games; all null for untimed games. See GameClock.
+    @Column(name = "base_time_ms")
+    Long baseTimeMs;
+
+    @Column(name = "increment_ms")
+    Long incrementMs;
+
+    @Column(name = "white_time_ms")
+    Long whiteTimeMs;
+
+    @Column(name = "black_time_ms")
+    Long blackTimeMs;
+
+    /** When the side to move's clock last started, in epoch milliseconds. */
+    @Column(name = "clock_started_at")
+    Long clockStartedAt;
+
+    /**
      * Returns the list of moves in the game, guaranteed to be non-null.
      *
      * @return the list of move entities
