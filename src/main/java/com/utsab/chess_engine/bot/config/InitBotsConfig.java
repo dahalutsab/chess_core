@@ -39,7 +39,7 @@ public class InitBotsConfig {
                                 "I move in mysterious ways.",
                                 "You won't see me coming... or going."
                         ),
-                        600
+                        700
                 ),
                 new Bots("Pawn Star", "Thinks it's the star of the show, but still learning the ropes.",
                         "Aspiring celebrity with a flair for the dramatic.",
@@ -50,7 +50,7 @@ public class InitBotsConfig {
                                 "I'm ready for my close-up... after this move.",
                                 "From humble beginnings to the queen's throne!"
                         ),
-                        800
+                        1100
                 ),
                 new Bots("Rookie Mistake", "Occasionally makes rookie mistakes, but shows potential.",
                         "Eager learner who sometimes trips over their own pieces.",
@@ -61,7 +61,7 @@ public class InitBotsConfig {
                                 "I swear I had a plan... somewhere.",
                                 "Even rookies have their moments!"
                         ),
-                        1000
+                        1400
                 ),
                 new Bots("Queen Bee", "Commands the board with flair and a touch of sass.",
                         "Regal and sassy, ruling the board with style.",
@@ -72,7 +72,7 @@ public class InitBotsConfig {
                                 "I make moveEntities and take names.",
                                 "You're just a pawn in my game."
                         ),
-                        1200
+                        1600
                 ),
                 new Bots("Kingpin", "The top boss—strategic, calculated, and formidable.",
                         "Mastermind with a penchant for control.",
@@ -83,11 +83,19 @@ public class InitBotsConfig {
                                 "Every piece moveEntities at my command.",
                                 "This board is my empire."
                         ),
-                        1400
+                        1750
                 )
         );
 
+        // Ratings were calibrated from a 360-game tournament between the bots (BlunderBot anchored at 400); existing
+        // bots are updated so that a database seeded with the old ratings picks up the new values.
         for (Bots bot : bots) {
+            botRepository.findBySlug(bot.getSlug()).ifPresent(existing -> {
+                if (existing.getEloRating() != bot.getEloRating()) {
+                    existing.setEloRating(bot.getEloRating());
+                    botRepository.save(existing);
+                }
+            });
             if (botRepository.findBySlug(bot.getSlug()).isEmpty()) {
                 botRepository.save(bot);
             }
