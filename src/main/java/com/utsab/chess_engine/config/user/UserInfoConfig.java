@@ -13,6 +13,11 @@ import java.util.Collection;
 public class UserInfoConfig implements UserDetails {
 
     private final UserEntity userEntity;
+
+    /** The user's id, so later code can refer to them without loading them again */
+    public Long getUserId() {
+        return userEntity.getId();
+    }
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return userEntity.getRoles().stream()

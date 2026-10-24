@@ -8,7 +8,8 @@ services:
     # Closest Render region to Nepal
     region: singapore
     dockerfilePath: ./Dockerfile
-    healthCheckPath: /api/v1/bots
+    # Never touches the database, so frequent checks let an idle database sleep
+    healthCheckPath: /api/v1/health
     domains:
       - api.uchess.dahalutsab.com.np
     envVars:

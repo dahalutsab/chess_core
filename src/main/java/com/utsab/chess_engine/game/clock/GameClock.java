@@ -86,6 +86,37 @@ public final class GameClock {
         return isRunning(game) && remaining(game, whiteToMove, whiteToMove, now) <= 0;
     }
 
+    /** Most network delay credited back to a player per move */
+    public static final long MAX_LAG_COMPENSATION_MS = 1000;
+
+    /**
+     * When a player's move counts as made, for charging their clock.
+     * <p>
+     * The server measures from when the player's clock started to when the move reached it ({@code receivedAt}, taken
+     * before any processing). That includes the network delay both ways, which isn't thinking time. The client
+     * reports how long the player actually took ({@code clientThinkMs}); the difference is network delay, and up to
+     * {@link #MAX_LAG_COMPENSATION_MS} of it is credited back. The cap bounds what a client could gain by reporting a
+     * shorter time than it took.
+     */
+    public static long moveTime(Game game, Long receivedAt, Long clientThinkMs, long now) {
+        long arrived = receivedAt != null ? Math.min(receivedAt, now) : now;
+        if (!isRunning(game) || game.getClockStartedAt() == null) return arrived;
+        long elapsed = Math.max(0, arrived - game.getClockStartedAt());
+        long reportedThink = clientThinkMs != null ? Math.max(0, Math.min(clientThinkMs, elapsed)) : elapsed;
+        long lag = elapsed - reportedThink;
+        return arrived - Math.min(lag, MAX_LAG_COMPENSATION_MS);
+    }
+
+    /**
+     * Start the side to move's clock from the given time, after a move has been recorded. Time between the move and
+     * this point (the server saving, or the bot about to think) is charged to nobody.
+     */
+    public static void restart(Game game, long now) {
+        if (isTimed(game) && game.getClockStartedAt() != null && now > game.getClockStartedAt()) {
+            game.setClockStartedAt(now);
+        }
+    }
+
     /**
      * Charge the side that just moved for its thinking time and add the increment, then start the opponent's clock.
      * Must be called before the move is added to the game.

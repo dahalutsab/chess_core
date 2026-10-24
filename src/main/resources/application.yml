@@ -2,6 +2,12 @@ spring:
   profiles:
     active: local
 
+  jpa:
+    properties:
+      hibernate:
+        # Load lazy players and move lists for several games in one query rather than one query each
+        default_batch_fetch_size: 32
+
   # Outgoing email (verification codes, password resets). Credentials come from the environment and are never
   # committed; without them the app runs, but emails fail to send.
   mail:

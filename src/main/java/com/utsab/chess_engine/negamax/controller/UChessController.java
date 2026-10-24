@@ -1,5 +1,6 @@
 package com.utsab.chess_engine.negamax.controller;
 
+import com.utsab.chess_engine.common.ActivityTracker;
 import com.utsab.chess_engine.common.BaseController;
 import com.utsab.chess_engine.events.EventHub;
 import org.springframework.http.MediaType;
@@ -35,7 +36,11 @@ public class UChessController extends BaseController {
     }
 
     @PostMapping("/best-move")
-    public ResponseEntity<ApiResponse<UChessResponse>> getBestMove(@RequestBody UChessRequest uChessRequest) {
+    public ResponseEntity<ApiResponse<UChessResponse>> getBestMove(
+            @RequestBody UChessRequest uChessRequest,
+            @RequestAttribute(name = ActivityTracker.RECEIVED_AT, required = false) Long receivedAt) {
+        // Times the move from its arrival, before authentication and loading the game
+        uChessRequest.setReceivedAt(receivedAt);
         UChessResponse uChessResponse = uChessService.getBestMove(uChessRequest);
         return successResponse(uChessResponse, "Best move calculated successfully");
     }

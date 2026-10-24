@@ -9,6 +9,7 @@ public enum WHITE_LIST_URLS {
     SWAGGER("/v1/swagger-ui/**", new HttpMethod[]{HttpMethod.GET}),
     SWAGGER_API_DOCS("/v1/api-docs/**", new HttpMethod[]{HttpMethod.GET}),
     BOTS("/api/v1/bots/**", new HttpMethod[]{HttpMethod.GET}),
+    HEALTH("/api/v1/health", new HttpMethod[]{HttpMethod.GET, HttpMethod.HEAD}),
     FILES("/files/**", new HttpMethod[]{HttpMethod.GET});
 
     /** Endpoints under the public /auth prefix that are only meaningful for a signed-in user */

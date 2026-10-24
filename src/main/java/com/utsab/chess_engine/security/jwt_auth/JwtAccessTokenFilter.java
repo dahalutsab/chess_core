@@ -19,6 +19,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -31,6 +32,8 @@ import java.util.Enumeration;
 @Slf4j
 public class JwtAccessTokenFilter extends OncePerRequestFilter {
 
+    private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
+
     private final RSAKeyRecord rsaKeyRecord;
     private final JwtTokenUtils jwtTokenUtils;
 
@@ -42,16 +45,17 @@ public class JwtAccessTokenFilter extends OncePerRequestFilter {
 
         String requestURI = request.getRequestURI();
         if (isWhitelisted(requestURI)) {
-            log.info("Skipping JWT filter for: {}", requestURI);
+            log.debug("Skipping JWT filter for: {}", requestURI);
             filterChain.doFilter(request, response);
             return;
         }
 
-        log.info("[JwtAccessTokenFilter] Filtering request: {}", requestURI);
+        log.debug("[JwtAccessTokenFilter] Filtering request: {}", requestURI);
 
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            log.error("[JwtAccessTokenFilter] Invalid or missing Authorization header");
+            // Normal for public endpoints and signed-out visitors; the authorisation rules decide what they may see
+            log.debug("[JwtAccessTokenFilter] No bearer token on {}", requestURI);
             filterChain.doFilter(request, response);
             return;
         }
@@ -90,9 +94,10 @@ public class JwtAccessTokenFilter extends OncePerRequestFilter {
 
     private boolean isWhitelisted(String requestURI) {
         if (WHITE_LIST_URLS.AUTHENTICATED_AUTH_URLS.contains(requestURI)) return false;
+        // Same Ant-style matching as the security rules, so "/api/v1/bots/**" also covers "/api/v1/bots"
         return Arrays.stream(WHITE_LIST_URLS.values())
                 .map(WHITE_LIST_URLS::getUrl)
-                .anyMatch(url -> requestURI.matches(url.replace("**", ".*")));
+                .anyMatch(pattern -> PATH_MATCHER.match(pattern, requestURI));
     }
 
 

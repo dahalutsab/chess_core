@@ -38,8 +38,6 @@ import org.springframework.data.domain.PageRequest;
 import com.utsab.chess_engine.move.entity.MoveEntity;
 import com.utsab.chess_engine.user.entity.UserEntity;
 import com.utsab.chess_engine.util.logged_in_user.LoggedInUserUtil;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -75,8 +73,6 @@ public class UChessServiceImplementation implements UChessService {
     private final RatingService ratingService;
     private final EventHub eventHub;
     private final TransactionTemplate transactionTemplate;
-    @PersistenceContext
-    private final EntityManager entityManager;
 
     /**
      * Starts a new chess game based on the provided request.
@@ -175,20 +171,10 @@ public class UChessServiceImplementation implements UChessService {
             throw new InvalidRequestException("Game is already over: " + reason);
         }
 
-        int maxDepth;
-        if ("BOT".equals(getPlayerType(game.getBlackPlayer()))) {
-            Bots bot = botRepository.findById(game.getBlackPlayer().getId())
-                    .orElseThrow(() -> new InvalidRequestException("Bot not found for player id: " + game.getBlackPlayer().getId()));
-            maxDepth = bot.getMaxDepth();
-        } else if ("BOT".equals(getPlayerType(game.getWhitePlayer()))) {
-            Bots bot = botRepository.findById(game.getWhitePlayer().getId())
-                    .orElseThrow(() -> new InvalidRequestException("Bot not found for player id: " + game.getWhitePlayer().getId()));
-            maxDepth = bot.getMaxDepth();
-        } else {
-            maxDepth = 200;
-        }
+        Bots bot = botOf(game);
+        int maxDepth = bot != null ? bot.getMaxDepth() : 200;
         UChessEngineUCI.ENGINE.getConfig().setMaxDepth(maxDepth);
-        log.info("Max depth set to: {}", UChessEngineUCI.ENGINE.getConfig().getMaxDepth());
+        log.debug("Max depth set to: {}", maxDepth);
 
         List<MoveEntity> moves = new ArrayList<>(game.getMoveEntities());
         List<Move> moveList = moves.stream().map(MoveEntity::getUci).map(Notation::fromCombinedNotation).toList();
@@ -215,8 +201,13 @@ public class UChessServiceImplementation implements UChessService {
             throw new InvalidRequestException("It is not your turn to move");
         }
 
+        // When the player's move counts as made: on arrival, less the network delay (see GameClock.moveTime), so the
+        // player isn't charged for the server's own work before it got to this point
+        long now = uChessRequest.getMove() != null
+                ? GameClock.moveTime(game, uChessRequest.getReceivedAt(), uChessRequest.getThinkTimeMs(), System.currentTimeMillis())
+                : System.currentTimeMillis();
+
         // If the side to move has run out of time, the game is over before this request can play anything
-        long now = System.currentTimeMillis();
         if (GameClock.isFlagged(game, board.isWhiteToMove(), now)) {
             finishOnTime(game, board, board.isWhiteToMove());
             return new UChessResponse(gameId, fen, null, null, game.getResult().name(),
@@ -249,9 +240,12 @@ public class UChessServiceImplementation implements UChessService {
         // Against a friend there is no reply to compute: the opponent moves through their own request
         boolean botReplies = "BOT".equals(getPlayerType(board.isWhiteToMove() ? game.getWhitePlayer() : game.getBlackPlayer()));
         if (gameResult == null && botReplies) {
-            // In a timed game the bot spends less than its usual second per move when its clock runs low
+            // In a timed game the bot spends less than its usual second per move when its clock runs low. Its clock
+            // starts now, as it starts thinking.
             boolean botIsWhite = board.isWhiteToMove();
-            SearchResult result = UChessEngineUCI.ENGINE.thinkSync(GameClock.botThinkTime(game, botIsWhite, now));
+            long thinkStart = System.currentTimeMillis();
+            GameClock.restart(game, thinkStart);
+            SearchResult result = UChessEngineUCI.ENGINE.thinkSync(GameClock.botThinkTime(game, botIsWhite, thinkStart));
 
             if (!GameClock.recordMove(game, botIsWhite, System.currentTimeMillis())) {
                 // The bot ran out of time while thinking, so its move doesn't count
@@ -278,6 +272,8 @@ public class UChessServiceImplementation implements UChessService {
             game.setResult(GameResult.valueOf(gameResult));
             finish(game);
         }
+        // The next player's clock starts once the server's work is done, not while it was still saving
+        if (gameResult == null) GameClock.restart(game, System.currentTimeMillis());
         gameRepository.save(game);
         notifyPlayers(game);
 
@@ -381,20 +377,18 @@ public class UChessServiceImplementation implements UChessService {
 
     @Override
     public List<RatingPoint> getRatingHistory() {
-        UserEntity user = loggedInUserUtil.getLoggedInUser();
-        List<Game> games = gameRepository.findByWhitePlayerIdOrBlackPlayerIdOrderByStartTimeDesc(
-                user.getId(), user.getId(), PageRequest.of(0, 200)).getContent();
+        Long userId = loggedInUserUtil.getLoggedInUser().getId();
+        // Newest first from the query; the points go oldest first
+        List<GameRepository.RatedGame> games = new ArrayList<>(gameRepository.findRatedGames(userId, PageRequest.of(0, 200)));
+        java.util.Collections.reverse(games);
         List<RatingPoint> points = new ArrayList<>();
-        // Oldest first
-        for (int i = games.size() - 1; i >= 0; i--) {
-            Game game = games.get(i);
-            boolean white = game.getWhitePlayer().getId().equals(user.getId());
-            Integer before = white ? game.getWhiteRatingBefore() : game.getBlackRatingBefore();
-            Integer change = white ? game.getWhiteRatingChange() : game.getBlackRatingChange();
-            // Unrated games (no move from one side) leave the rating where it was
-            if (before == null || change == null || game.getEndTime() == null || game.getMoveEntities().size() < 2) continue;
-            if (points.isEmpty()) points.add(new RatingPoint(game.getStartTime().toString(), before));
-            points.add(new RatingPoint(game.getEndTime().toString(), before + change));
+        for (GameRepository.RatedGame game : games) {
+            boolean white = game.whitePlayerId().equals(userId);
+            Integer before = white ? game.whiteRatingBefore() : game.blackRatingBefore();
+            Integer change = white ? game.whiteRatingChange() : game.blackRatingChange();
+            if (before == null || change == null) continue;
+            if (points.isEmpty()) points.add(new RatingPoint(game.startTime().toString(), before));
+            points.add(new RatingPoint(game.endTime().toString(), before + change));
         }
         return points;
     }
@@ -507,7 +501,9 @@ public class UChessServiceImplementation implements UChessService {
     public int sweepAbandonedGames() {
         LocalDateTime now = LocalDateTime.now();
         int ended = 0;
-        for (UUID gameId : gameRepository.findIdsInProgressInactiveSince(now.minusMinutes(1))) {
+        List<UUID> candidates = gameRepository.findSweepCandidates(
+                now.minus(ABORT_AFTER), now.minus(PVP_ABANDON_AFTER), now.minus(PVB_ABANDON_AFTER));
+        for (UUID gameId : candidates) {
             // The scheduler has no request-scoped session, so each game is handled in its own transaction
             Boolean endedThis = transactionTemplate.execute(status -> sweepGame(gameId, now));
             if (Boolean.TRUE.equals(endedThis)) ended++;
@@ -658,8 +654,8 @@ public class UChessServiceImplementation implements UChessService {
             Player opponent = white ? game.getBlackPlayer() : game.getWhitePlayer();
 
             BotResponse botResponse = null;
-            if ("BOT".equals(getPlayerType(opponent))) {
-                botResponse = botRepository.findById(opponent.getId()).map(BotResponse::new).orElse(null);
+            if (Hibernate.unproxy(opponent) instanceof Bots bot) {
+                botResponse = new BotResponse(bot);
             }
 
             Integer before = white ? game.getWhiteRatingBefore() : game.getBlackRatingBefore();
@@ -701,60 +697,26 @@ public class UChessServiceImplementation implements UChessService {
     }
 
     /**
-     * Determines the type of player (USER or BOT) based on the JPA entity type.
-     * Uses the TYPE function to retrieve the discriminator value, handling JPA proxies accurately.
-     *
-     * @param player the player entity to check
-     * @return "USER" if the player is a UserEntity, "BOT" if the player is a Bots instance
+     * "USER" or "BOT". Players are loaded once per request and their subclass read directly, rather than asking the
+     * database each time.
      */
-    private String getPlayerType(Player player) {
-        log.debug("Checking player type for ID: {}", player.getId());
-        try {
-            Class<?> entityType = entityManager.createQuery(
-                            "SELECT TYPE(p) FROM Player p WHERE p.id = :id", Class.class)
-                    .setParameter("id", player.getId())
-                    .getSingleResult();
-            log.debug("Entity type for ID {}: {}", player.getId(), entityType.getSimpleName());
-            return UserEntity.class.equals(entityType) ? "USER" : "BOT";
-        } catch (Exception e) {
-            log.warn("Failed to determine player type for ID: {}, defaulting to BOT", player.getId(), e);
-            return "BOT";
-        }
+    private static String getPlayerType(Player player) {
+        return Hibernate.unproxy(player) instanceof Bots ? "BOT" : "USER";
     }
 
-    /**
-     * Retrieves the display name of a player dynamically based on the entity type.
-     * Returns the fullName for UserEntity or botName for Bots, falling back to a default name if not available.
-     *
-     * @param player the player entity to check
-     * @return the player's display name
-     */
-    private String getPlayerName(Player player) {
-        log.debug("Fetching name for player ID: {}", player.getId());
-        try {
-            Class<?> entityType = entityManager.createQuery(
-                            "SELECT TYPE(p) FROM Player p WHERE p.id = :id", Class.class)
-                    .setParameter("id", player.getId())
-                    .getSingleResult();
-            if (UserEntity.class.equals(entityType)) {
-                String fullName = entityManager.createQuery(
-                                "SELECT u.fullName FROM UserEntity u WHERE u.id = :id", String.class)
-                        .setParameter("id", player.getId())
-                        .getSingleResult();
-                log.debug("User fullName for ID {}: {}", player.getId(), fullName);
-                return fullName != null ? fullName : "User-" + player.getId();
-            } else {
-                String botName = entityManager.createQuery(
-                                "SELECT b.botName FROM Bots b WHERE b.id = :id", String.class)
-                        .setParameter("id", player.getId())
-                        .getSingleResult();
-                log.debug("Bot botName for ID {}: {}", player.getId(), botName);
-                return botName != null ? botName : "Bot-" + player.getId();
-            }
-        } catch (Exception e) {
-            log.warn("Failed to fetch name for player ID: {}, defaulting to Player-{}", player.getId(), player.getId(), e);
-            return "Player-" + player.getId();
-        }
+    /** The user's full name or the bot's name */
+    private static String getPlayerName(Player player) {
+        Object real = Hibernate.unproxy(player);
+        if (real instanceof UserEntity user && user.getFullName() != null) return user.getFullName();
+        if (real instanceof Bots bot && bot.getBotName() != null) return bot.getBotName();
+        return "Player-" + player.getId();
+    }
+
+    /** The bot playing in the game, if any */
+    private static Bots botOf(Game game) {
+        if (Hibernate.unproxy(game.getWhitePlayer()) instanceof Bots bot) return bot;
+        if (Hibernate.unproxy(game.getBlackPlayer()) instanceof Bots bot) return bot;
+        return null;
     }
 
     /**

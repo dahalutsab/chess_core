@@ -30,7 +30,12 @@ spring:
     hikari:
       # Free hosted databases allow few connections, and this app needs few
       maximum-pool-size: ${DATABASE_POOL_SIZE:5}
-      minimum-idle: 1
+      # Close idle connections, so a database that sleeps when idle (Neon's free plan) can; it wakes on the next query
+      minimum-idle: 0
+      idle-timeout: 120000
+      max-lifetime: 600000
+      # Waking a sleeping database takes a few seconds
+      connection-timeout: 30000
 
   jpa:
     show_sql: false

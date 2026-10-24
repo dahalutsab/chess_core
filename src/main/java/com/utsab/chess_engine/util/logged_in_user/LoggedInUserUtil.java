@@ -1,5 +1,6 @@
 package com.utsab.chess_engine.util.logged_in_user;
 
+import com.utsab.chess_engine.config.user.UserInfoConfig;
 import com.utsab.chess_engine.user.entity.UserEntity;
 import com.utsab.chess_engine.user.repository.UserInfoRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -15,11 +16,17 @@ public class LoggedInUserUtil {
 
     private final UserInfoRepository userInfoRepository;
 
+    /**
+     * The signed-in user. The security filter already loaded and checked them, so when it left their id this returns a
+     * lazy reference: reading the id costs nothing, and the rest is loaded only if used.
+     */
     public UserEntity getLoggedInUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated()) {
+            if (authentication.getPrincipal() instanceof UserInfoConfig details && details.getUserId() != null) {
+                return userInfoRepository.getReferenceById(details.getUserId());
+            }
             String username = getUsername(authentication);
-
             return userInfoRepository.findByEmailId(username)
                     .orElseThrow(() -> new EntityNotFoundException("No user found with username: " + username));
         }
