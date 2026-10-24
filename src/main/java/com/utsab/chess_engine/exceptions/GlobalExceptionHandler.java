@@ -36,7 +36,9 @@ public class GlobalExceptionHandler extends BaseController {
     // Handle IllegalArgumentException
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException ex) {
-        return errorResponse("Illegal argument provided", "ERR-402", ex.getMessage(), HttpStatus.BAD_REQUEST);
+        // The message names the problem (e.g. "Illegal move e4g2"), which the app shows the player
+        String message = ex.getMessage() != null ? ex.getMessage() : "Illegal argument provided";
+        return errorResponse(message, "ERR-402", ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     // Handle ResourceNotFoundException (Custom Exception)
