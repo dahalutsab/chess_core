@@ -18,6 +18,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -74,8 +75,10 @@ public class JwtAccessTokenFilter extends OncePerRequestFilter {
             // Validate and authenticate
             final String userName = jwtTokenUtils.getUserName(claims);
             if (!userName.isEmpty() && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = jwtTokenUtils.userDetails(userName);
-                if (jwtTokenUtils.isTokenValid(claims, userDetails)) {
+                UserDetails userDetails = findUser(userName);
+                // A token for an account that no longer exists or can't sign in leaves the request signed out, so it
+                // gets a 401 and the app can renew the session or ask the user to sign in, rather than an error
+                if (userDetails != null && userDetails.isEnabled() && jwtTokenUtils.isTokenValid(claims, userDetails)) {
                     SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
                     UsernamePasswordAuthenticationToken createdToken =
                             new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
@@ -90,6 +93,15 @@ public class JwtAccessTokenFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private UserDetails findUser(String userName) {
+        try {
+            return jwtTokenUtils.userDetails(userName);
+        } catch (UsernameNotFoundException e) {
+            log.debug("[JwtAccessTokenFilter] Token for unknown user {}", userName);
+            return null;
+        }
     }
 
     private boolean isWhitelisted(String requestURI) {
