@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 import static com.utsab.chess_engine.common.constants.APIConstants.API_BASE;
@@ -39,6 +40,16 @@ public class UChessController extends BaseController {
     public ResponseEntity<ApiResponse<GameDto>> getGameInfo(@PathVariable UUID gameId) {
         GameDto gameDto = uChessService.getGameInfo(gameId);
         return successResponse(gameDto, "Game info fetched successfully");
+    }
+
+    @PostMapping("/{gameId}/resign")
+    public ResponseEntity<ApiResponse<GameDto>> resign(@PathVariable UUID gameId) {
+        return successResponse(uChessService.resign(gameId), "Game resigned");
+    }
+
+    @GetMapping("/rating-history")
+    public ResponseEntity<ApiResponse<List<UChessService.RatingPoint>>> getRatingHistory() {
+        return successResponse(uChessService.getRatingHistory(), "Rating history fetched successfully");
     }
 
     @GetMapping("/history")

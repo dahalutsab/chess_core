@@ -32,6 +32,9 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Game extends Auditable {
 
+    /** {@link #termination} of a game a player resigned */
+    public static final String RESIGNATION = "RESIGNATION";
+
     /**
      * Unique identifier for the game.
      */
@@ -113,6 +116,20 @@ public class Game extends Auditable {
     /** When the side to move's clock last started, in epoch milliseconds. */
     @Column(name = "clock_started_at")
     Long clockStartedAt;
+
+    // Elo ratings at the start of the game and how much each changed when it ended; all null until a rated game ends.
+    // A bot's rating is fixed, so its change is always 0.
+    @Column(name = "white_rating_before")
+    Integer whiteRatingBefore;
+
+    @Column(name = "black_rating_before")
+    Integer blackRatingBefore;
+
+    @Column(name = "white_rating_change")
+    Integer whiteRatingChange;
+
+    @Column(name = "black_rating_change")
+    Integer blackRatingChange;
 
     /**
      * Returns the list of moves in the game, guaranteed to be non-null.

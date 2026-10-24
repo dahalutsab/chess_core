@@ -23,7 +23,7 @@ public class LogoutHandlerService implements LogoutHandler {
 
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-        if(!authHeader.startsWith(TokenType.Bearer.name())){
+        if (authHeader == null || !authHeader.startsWith(TokenType.Bearer.name())) {
             return;
         }
 

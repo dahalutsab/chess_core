@@ -1,13 +1,16 @@
 package com.utsab.chess_engine.game.dto;
 
+import java.net.URI;
+
 /**
- * Represents a player in a chess game, either a user or a bot.
- *
- * @author Utsab Dahal
- * @since 2025
+ * @param rating       the player's rating when the game started
+ * @param ratingChange how much the rating changed when the game ended; null while the game is in progress
  */
 public record PlayerDto(
         Long id,
         String type, // "USER" or "BOT"
-        String name
+        String name,
+        Integer rating,
+        Integer ratingChange,
+        URI avatar
 ) {}

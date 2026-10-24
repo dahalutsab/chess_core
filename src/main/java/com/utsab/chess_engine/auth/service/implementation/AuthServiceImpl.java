@@ -46,8 +46,10 @@ import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.net.URI;
+import java.security.SecureRandom;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -114,6 +116,40 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+
+    @Override
+    @Transactional
+    public AuthResponse loginAsGuest(HttpServletResponse response) {
+        UserEntity guest = new UserEntity();
+        guest.setFullName("Guest " + (1000 + RANDOM.nextInt(9000)));
+        // Guests never sign in with a password, but the columns are required: use an unguessable address and secret
+        guest.setEmailId("guest-" + UUID.randomUUID() + GUEST_EMAIL_DOMAIN);
+        guest.setPassword(new BCryptPasswordEncoder().encode(UUID.randomUUID().toString()));
+        Roles role = rolesRepository.findByName(UserRole.USER.name())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
+        guest.getRoles().add(role);
+        guest.setVerified(true);
+        guest.setGuest(true);
+        guest.setRating(UserEntity.DEFAULT_RATING);
+        guest = userInfoRepository.save(guest);
+
+        Authentication authentication = createAuthenticationObject(guest);
+        String accessToken = jwtTokenGenerator.generateAccessToken(authentication);
+        String refreshToken = jwtTokenGenerator.generateRefreshToken(authentication);
+        saveUserRefreshToken(guest, refreshToken);
+        createRefreshTokenCookie(response, refreshToken);
+        log.info("[AuthServiceImpl:loginAsGuest] Created guest account {}", guest.getEmailId());
+
+        return AuthResponse.builder()
+                .accessToken(accessToken)
+                .accessTokenExpiry(15 * 60)
+                .userRole(guest.getRoles().stream().map(RolesResponse::new).toList())
+                .tokenType(TokenType.Bearer)
+                .build();
+    }
+
+    private static final String GUEST_EMAIL_DOMAIN = "@guest.uchess.local";
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     private void saveUserRefreshToken(UserEntity userEntity, String refreshToken) {
         var refreshTokenEntity = RefreshTokenEntity.builder()

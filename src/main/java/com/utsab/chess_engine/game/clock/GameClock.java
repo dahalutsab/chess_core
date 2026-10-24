@@ -107,6 +107,16 @@ public final class GameClock {
     }
 
     /**
+     * Stop the clocks when a game ends between moves (e.g. by resignation), charging the side to move for the time it
+     * used. Call before changing the game's result.
+     */
+    public static void stop(Game game, boolean whiteToMove, long now) {
+        if (!isRunning(game)) return;
+        setTime(game, whiteToMove, Math.max(0, remaining(game, whiteToMove, whiteToMove, now)));
+        game.setClockStartedAt(now);
+    }
+
+    /**
      * Record a time-out by the given side: it loses, unless its opponent cannot possibly checkmate, which is a draw.
      */
     public static void flag(Game game, Board board, boolean flaggedWhite) {

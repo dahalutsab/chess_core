@@ -22,12 +22,17 @@ import com.utsab.chess_engine.game.dto.history.GamesResponse;
 import com.utsab.chess_engine.game.dto.history.HistoryResponse;
 import com.utsab.chess_engine.game.entity.Game;
 import com.utsab.chess_engine.game.entity.enums.GameResult;
+import com.utsab.chess_engine.game.entity.enums.GameType;
 import com.utsab.chess_engine.game.repository.GameRepository;
 import com.utsab.chess_engine.negamax.dto.NewGameRequest;
 import com.utsab.chess_engine.negamax.dto.PreferredColor;
 import com.utsab.chess_engine.negamax.dto.UChessRequest;
 import com.utsab.chess_engine.negamax.dto.UChessResponse;
 import com.utsab.chess_engine.negamax.service.UChessService;
+import com.utsab.chess_engine.rating.RatingService;
+import com.utsab.chess_engine.util.file.FileUrlUtil;
+import org.hibernate.Hibernate;
+import org.springframework.data.domain.PageRequest;
 import com.utsab.chess_engine.move.entity.MoveEntity;
 import com.utsab.chess_engine.user.entity.UserEntity;
 import com.utsab.chess_engine.util.logged_in_user.LoggedInUserUtil;
@@ -39,6 +44,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,6 +67,7 @@ public class UChessServiceImplementation implements UChessService {
     private final GameRepository gameRepository;
     private final BotRepository botRepository;
     private final LoggedInUserUtil loggedInUserUtil;
+    private final RatingService ratingService;
     @PersistenceContext
     private final EntityManager entityManager;
 
@@ -120,8 +127,10 @@ public class UChessServiceImplementation implements UChessService {
                 .initialFen(initialFen)
                 .startTime(LocalDateTime.now())
                 .result(GameResult.IN_PROGRESS)
-                .gameType(request.gameType())
+                .gameType(GameType.PVB)
                 .moveEntities(new ArrayList<>())
+                .whiteRatingBefore(RatingService.ratingOf(whitePlayer))
+                .blackRatingBefore(RatingService.ratingOf(blackPlayer))
                 .build();
         GameClock.start(game, timeControl, System.currentTimeMillis());
 
@@ -185,11 +194,17 @@ public class UChessServiceImplementation implements UChessService {
 
         // A move may only be submitted on the user's turn, and the bot may only be asked to move (no move) on its own
         // turn; otherwise a repeated or stale request would make the engine play the user's side.
+        UserEntity user = loggedInUserUtil.getLoggedInUser();
+        boolean userIsWhite = game.getWhitePlayer().getId().equals(user.getId());
+        boolean userIsBlack = game.getBlackPlayer().getId().equals(user.getId());
+        if (!userIsWhite && !userIsBlack) {
+            throw new InvalidRequestException("You are not playing in this game");
+        }
         boolean botToMove = "BOT".equals(getPlayerType(board.isWhiteToMove() ? game.getWhitePlayer() : game.getBlackPlayer()));
         if (uChessRequest.getMove() == null && !botToMove) {
             throw new InvalidRequestException("It is not the bot's turn to move");
         }
-        if (uChessRequest.getMove() != null && botToMove) {
+        if (uChessRequest.getMove() != null && !(board.isWhiteToMove() ? userIsWhite : userIsBlack)) {
             throw new InvalidRequestException("It is not your turn to move");
         }
 
@@ -223,7 +238,9 @@ public class UChessServiceImplementation implements UChessService {
         String bestMove = null;
         String bestMoveSan = null;
 
-        if (gameResult == null) {
+        // Against a friend there is no reply to compute: the opponent moves through their own request
+        boolean botReplies = "BOT".equals(getPlayerType(board.isWhiteToMove() ? game.getWhitePlayer() : game.getBlackPlayer()));
+        if (gameResult == null && botReplies) {
             // In a timed game the bot spends less than its usual second per move when its clock runs low
             boolean botIsWhite = board.isWhiteToMove();
             SearchResult result = UChessEngineUCI.ENGINE.thinkSync(GameClock.botThinkTime(game, botIsWhite, now));
@@ -250,7 +267,7 @@ public class UChessServiceImplementation implements UChessService {
 
         if (gameResult != null) {
             game.setResult(GameResult.valueOf(gameResult));
-            game.setEndTime(LocalDateTime.now());
+            finish(game);
         }
         gameRepository.save(game);
 
@@ -263,16 +280,119 @@ public class UChessServiceImplementation implements UChessService {
      */
     private void finishOnTime(Game game, Board board, boolean flaggedWhite) {
         GameClock.flag(game, board, flaggedWhite);
-        game.setEndTime(LocalDateTime.now());
+        finish(game);
         gameRepository.save(game);
     }
 
+    /**
+     * Bookkeeping for a game whose result has just been set: records the end time and updates the players' ratings.
+     */
+    private void finish(Game game) {
+        if (game.getEndTime() == null) game.setEndTime(LocalDateTime.now());
+        ratingService.rate(game);
+    }
+
+    @Override
+    public GameDto resign(UUID gameId) {
+        synchronized (UChessEngineUCI.ENGINE) {
+            Game game = gameRepository.findById(gameId)
+                    .orElseThrow(() -> new InvalidRequestException("Game not found: " + gameId));
+            UserEntity user = loggedInUserUtil.getLoggedInUser();
+            boolean userIsWhite = game.getWhitePlayer().getId().equals(user.getId());
+            if (!userIsWhite && !game.getBlackPlayer().getId().equals(user.getId())) {
+                throw new InvalidRequestException("You are not playing in this game");
+            }
+
+            Board board = setUpPosition(game);
+            long now = System.currentTimeMillis();
+            if (GameClock.isFlagged(game, board.isWhiteToMove(), now)) {
+                // Lost on time before resigning
+                finishOnTime(game, board, board.isWhiteToMove());
+                return toGameDto(game, board, null);
+            }
+            if (game.getResult().isFinished()) {
+                throw new InvalidRequestException("Game is already over");
+            }
+
+            GameClock.stop(game, board.isWhiteToMove(), now);
+            game.setResult(userIsWhite ? GameResult.BLACK_WIN : GameResult.WHITE_WIN);
+            game.setTermination(Game.RESIGNATION);
+            finish(game);
+            gameRepository.save(game);
+            return toGameDto(game, board, null);
+        }
+    }
+
+    @Override
+    public UUID startPvpGame(UserEntity challenger, UserEntity opponent, PreferredColor challengerColor, String timeControl) {
+        GameClock.TimeControl clock;
+        try {
+            clock = GameClock.parse(timeControl);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidRequestException(e.getMessage());
+        }
+        boolean challengerIsWhite = challengerColor == PreferredColor.RANDOM
+                ? Math.random() < 0.5
+                : challengerColor == PreferredColor.WHITE;
+        UserEntity white = challengerIsWhite ? challenger : opponent;
+        UserEntity black = challengerIsWhite ? opponent : challenger;
+
+        Game game = Game.builder()
+                .whitePlayer(white)
+                .blackPlayer(black)
+                .initialFen(FEN.STARTING_POSITION)
+                .startTime(LocalDateTime.now())
+                .result(GameResult.IN_PROGRESS)
+                .gameType(GameType.PVP)
+                .moveEntities(new ArrayList<>())
+                .whiteRatingBefore(white.currentRating())
+                .blackRatingBefore(black.currentRating())
+                .build();
+        GameClock.start(game, clock, System.currentTimeMillis());
+        return gameRepository.save(game).getId();
+    }
+
+    @Override
+    public List<RatingPoint> getRatingHistory() {
+        UserEntity user = loggedInUserUtil.getLoggedInUser();
+        List<Game> games = gameRepository.findByWhitePlayerIdOrBlackPlayerIdOrderByStartTimeDesc(
+                user.getId(), user.getId(), PageRequest.of(0, 200)).getContent();
+        List<RatingPoint> points = new ArrayList<>();
+        // Oldest first
+        for (int i = games.size() - 1; i >= 0; i--) {
+            Game game = games.get(i);
+            boolean white = game.getWhitePlayer().getId().equals(user.getId());
+            Integer before = white ? game.getWhiteRatingBefore() : game.getBlackRatingBefore();
+            Integer change = white ? game.getWhiteRatingChange() : game.getBlackRatingChange();
+            // Unrated games (no move from one side) leave the rating where it was
+            if (before == null || change == null || game.getEndTime() == null || game.getMoveEntities().size() < 2) continue;
+            if (points.isEmpty()) points.add(new RatingPoint(game.getStartTime().toString(), before));
+            points.add(new RatingPoint(game.getEndTime().toString(), before + change));
+        }
+        return points;
+    }
+
+    /** Load the game's position into the engine and return the board */
+    private Board setUpPosition(Game game) {
+        List<Move> moves = game.getMoveEntities().stream().map(MoveEntity::getUci).map(Notation::fromCombinedNotation).toList();
+        UChessEngineUCI.ENGINE.setPosition(game.getInitialFen(), moves);
+        return UChessEngineUCI.ENGINE.getBoard();
+    }
+
     private GameDto toGameDto(Game game, Board board, UChessResponse botMove) {
+        String yourColor = null;
+        try {
+            Long userId = loggedInUserUtil.getLoggedInUser().getId();
+            if (game.getWhitePlayer().getId().equals(userId)) yourColor = "WHITE";
+            else if (game.getBlackPlayer().getId().equals(userId)) yourColor = "BLACK";
+        } catch (RuntimeException e) {
+            // Not signed in: nobody's colour
+        }
         return new GameDto(
                 game.getId(),
                 game.getGameType(),
-                new PlayerDto(game.getWhitePlayer().getId(), getPlayerType(game.getWhitePlayer()), getPlayerName(game.getWhitePlayer())),
-                new PlayerDto(game.getBlackPlayer().getId(), getPlayerType(game.getBlackPlayer()), getPlayerName(game.getBlackPlayer())),
+                toPlayerDto(game.getWhitePlayer(), game.getWhiteRatingBefore(), game.getWhiteRatingChange()),
+                toPlayerDto(game.getBlackPlayer(), game.getBlackRatingBefore(), game.getBlackRatingChange()),
                 game.getInitialFen(),
                 game.getStartTime(),
                 game.getEndTime(),
@@ -281,8 +401,22 @@ public class UChessServiceImplementation implements UChessService {
                 botMove,
                 board.isWhiteToMove() ? "WHITE" : "BLACK",
                 GameClock.snapshot(game, board.isWhiteToMove(), System.currentTimeMillis()),
-                game.getTermination()
+                game.getTermination(),
+                yourColor
         );
+    }
+
+    private PlayerDto toPlayerDto(Player player, Integer ratingBefore, Integer ratingChange) {
+        // Games from before ratings existed have no recorded rating: show the player's current one
+        int rating = ratingBefore != null ? ratingBefore : RatingService.ratingOf(player);
+        return new PlayerDto(player.getId(), getPlayerType(player), getPlayerName(player), rating, ratingChange, avatarOf(player));
+    }
+
+    private static URI avatarOf(Player player) {
+        Object real = Hibernate.unproxy(player);
+        if (real instanceof UserEntity user) return FileUrlUtil.getFileUri(user.getProfileImage());
+        if (real instanceof Bots bot) return FileUrlUtil.getFileUri(bot.getBotImageUrl());
+        return null;
     }
 
     /**
@@ -329,64 +463,52 @@ public class UChessServiceImplementation implements UChessService {
     @Override
     public HistoryResponse getGameHistory(Pageable pageable) {
         UserEntity currentUser = loggedInUserUtil.getLoggedInUser();
+        Long userId = currentUser.getId();
 
-        Page<Game> games = gameRepository.findByWhitePlayerIdOrBlackPlayerIdOrderByStartTimeDesc(
-                currentUser.getId(), currentUser.getId(), pageable);
+        Page<Game> games = gameRepository.findByWhitePlayerIdOrBlackPlayerIdOrderByStartTimeDesc(userId, userId, pageable);
 
         Page<GamesResponse> gamesResponses = games.map(game -> {
-            String playerColor = game.getWhitePlayer().getId().equals(currentUser.getId()) ?
-                    "WHITE" : "BLACK";
-            Player opponent = playerColor.equals("WHITE") ?
-                    game.getBlackPlayer() : game.getWhitePlayer();
+            boolean white = game.getWhitePlayer().getId().equals(userId);
+            Player opponent = white ? game.getBlackPlayer() : game.getWhitePlayer();
 
             BotResponse botResponse = null;
             if ("BOT".equals(getPlayerType(opponent))) {
-                Bots bot = botRepository.findById(opponent.getId())
-                        .orElse(null);
-                if (bot != null) {
-                    botResponse = new BotResponse(bot);
-                }
+                botResponse = botRepository.findById(opponent.getId()).map(BotResponse::new).orElse(null);
             }
 
-            return new GamesResponse(
-                    game.getId().toString(),
-                    game.getGameType().name(),
-                    getPlayerName(game.getWhitePlayer()),
-                    getPlayerName(game.getBlackPlayer()),
-                    game.getStartTime().toString(),
-                    game.getEndTime() != null ? game.getEndTime().toString() : null,
-                    game.getResult().name(),
-                    game.getMoveEntities().size(),
-                    playerColor,
-                    botResponse
-            );
+            Integer before = white ? game.getWhiteRatingBefore() : game.getBlackRatingBefore();
+            Integer change = white ? game.getWhiteRatingChange() : game.getBlackRatingChange();
+            Integer opponentRating = white ? game.getBlackRatingBefore() : game.getWhiteRatingBefore();
+
+            return GamesResponse.builder()
+                    .gameId(game.getId().toString())
+                    .gameType(game.getGameType().name())
+                    .whitePlayer(getPlayerName(game.getWhitePlayer()))
+                    .blackPlayer(getPlayerName(game.getBlackPlayer()))
+                    .startTime(game.getStartTime().toString())
+                    .endTime(game.getEndTime() != null ? game.getEndTime().toString() : null)
+                    .result(game.getResult().name())
+                    .termination(game.getTermination())
+                    .moveCount(game.getMoveEntities().size())
+                    .playerColor(white ? "WHITE" : "BLACK")
+                    .bot(botResponse)
+                    .opponentName(getPlayerName(opponent))
+                    .opponentAvatar(avatarOf(opponent))
+                    .opponentRating(opponentRating != null ? opponentRating : RatingService.ratingOf(opponent))
+                    .ratingChange(change)
+                    .rating(before != null ? before + (change != null ? change : 0) : null)
+                    .build();
         });
 
-        // Calculate game statistics
-        long totalGames = games.getTotalElements();
-        long totalWins = games.stream().filter(game -> {
-            boolean isWhite = game.getWhitePlayer().getId().equals(currentUser.getId());
-            return (isWhite && game.getResult() == GameResult.WHITE_WIN) ||
-                    (!isWhite && game.getResult() == GameResult.BLACK_WIN);
-        }).count();
-        long totalLosses = games.stream().filter(game -> {
-            boolean isWhite = game.getWhitePlayer().getId().equals(currentUser.getId());
-            return (isWhite && game.getResult() == GameResult.BLACK_WIN) ||
-                    (!isWhite && game.getResult() == GameResult.WHITE_WIN);
-        }).count();
-        long totalDraws = games.stream().filter(game ->
-                game.getResult() == GameResult.DRAW_BY_REPETITION ||
-                        game.getResult() == GameResult.DRAW_BY_FIFTY_MOVE_RULE ||
-                        game.getResult() == GameResult.DRAW_BY_INSUFFICIENT_MATERIAL ||
-                        game.getResult() == GameResult.DRAW_BY_STALEMATE
-        ).count();
+        // Statistics cover all of the user's games, not just this page
+        int wins = (int) gameRepository.countWins(userId);
+        int losses = (int) gameRepository.countLosses(userId);
+        int draws = (int) gameRepository.countWithResults(userId, GameResult.draws());
+        int rating = currentUser.currentRating();
+        int peak = getRatingHistory().stream().mapToInt(RatingPoint::rating).max().orElse(rating);
 
         GameStatsResponse stats = new GameStatsResponse(
-                (int) totalGames,
-                (int) totalWins,
-                (int) totalLosses,
-                (int) totalDraws
-        );
+                (int) games.getTotalElements(), wins, losses, draws, rating, Math.max(peak, rating), currentUser.ratedGameCount());
 
         return new HistoryResponse(stats, gamesResponses);
     }

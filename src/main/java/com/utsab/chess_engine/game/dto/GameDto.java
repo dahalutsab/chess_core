@@ -25,6 +25,8 @@ public record GameDto(
         com.utsab.chess_engine.negamax.dto.UChessResponse botMove,
         String currentTurn,
         ClockDto clock,
-        String termination
+        String termination,
+        /* The colour the requesting user plays ("WHITE" or "BLACK"), or null when they are not playing in this game */
+        String yourColor
 ) {}
 

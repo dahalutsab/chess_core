@@ -89,6 +89,7 @@ public class JwtAccessTokenFilter extends OncePerRequestFilter {
     }
 
     private boolean isWhitelisted(String requestURI) {
+        if (WHITE_LIST_URLS.AUTHENTICATED_AUTH_URLS.contains(requestURI)) return false;
         return Arrays.stream(WHITE_LIST_URLS.values())
                 .map(WHITE_LIST_URLS::getUrl)
                 .anyMatch(url -> requestURI.matches(url.replace("**", ".*")));

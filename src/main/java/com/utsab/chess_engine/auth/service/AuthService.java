@@ -14,6 +14,9 @@ public interface AuthService {
 
     AuthResponse getJwtTokensAfterAuthentication(AuthRequest authenticationRequest, HttpServletResponse response);
 
+    /** Create a guest account and sign in to it, for playing without registering */
+    AuthResponse loginAsGuest(HttpServletResponse response);
+
     AuthResponse getAccessTokenUsingRefreshToken(@CookieValue(name = "refresh_token", required = false) String refreshToken);
 
     ForgotPasswordResponse forgotPassword(String email);

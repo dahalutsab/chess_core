@@ -45,6 +45,15 @@ public class AuthController extends BaseController {
     }
 
     @Operation(
+            summary = "Play as a guest",
+            description = "Creates a guest account and returns tokens for it, so people can play without registering."
+    )
+    @PostMapping("/guest")
+    public ResponseEntity<ApiResponse<AuthResponse>> loginAsGuest(HttpServletResponse response) {
+        return successResponse(authService.loginAsGuest(response), AuthResponseMessages.USER_AUTHENTICATED);
+    }
+
+    @Operation(
             summary = "Refresh JWT access token",
             description = "Generates a new access token using a valid refresh token."
     )

@@ -23,6 +23,9 @@ public class UserRegistrationResponse {
     List<RolesResponse> userRole;
     LocalDateTime otpExpiryTime;
     LocalDateTime createdAt;
+    Integer rating;
+    Integer ratedGames;
+    boolean guest;
 
     public UserRegistrationResponse(UserEntity user) {
         this.id = user.getId();
@@ -33,6 +36,9 @@ public class UserRegistrationResponse {
                 .map(RolesResponse::new)
                 .toList();
         this.createdAt = user.getCreatedDate();
+        this.rating = user.currentRating();
+        this.ratedGames = user.ratedGameCount();
+        this.guest = user.isGuestAccount();
     }
 
     public UserRegistrationResponse(UserEntity user, LocalDateTime otpExpiryTime) {

@@ -47,6 +47,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
+                    // Checked before the whitelist, which would otherwise make these public
+                    WHITE_LIST_URLS.AUTHENTICATED_AUTH_URLS.forEach(url -> auth.requestMatchers(url).authenticated());
                     for (WHITE_LIST_URLS entry : WHITE_LIST_URLS.values()) {
                         for (HttpMethod method : entry.getMethods()) {
                             auth.requestMatchers(method, entry.getUrl()).permitAll();

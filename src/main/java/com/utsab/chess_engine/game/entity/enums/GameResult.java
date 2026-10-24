@@ -34,6 +34,10 @@ public enum GameResult {
                 || this == DRAW_BY_AGREEMENT;
     }
 
+    public static java.util.List<GameResult> draws() {
+        return java.util.Arrays.stream(values()).filter(GameResult::isDraw).toList();
+    }
+
     public boolean isFinished() {
         return this != IN_PROGRESS;
     }
