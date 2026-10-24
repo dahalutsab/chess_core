@@ -63,6 +63,20 @@ Tables are created automatically on first start (`ddl-auto: update`), and the bo
 Everything else (`SPRING_PROFILES_ACTIVE=prod`, the public URLs, allowed origin, engine threads) is set in
 `render.yaml`. All settings are listed in `src/main/resources/application-prod.yml`.
 
+**If you created the service with "New → Web Service" instead of a Blueprint**, `render.yaml` is not read, so add
+these too under Environment:
+
+| Variable | Value |
+|---|---|
+| `SPRING_PROFILES_ACTIVE` | `prod` (the Docker image defaults to it, but set it to be explicit) |
+| `PUBLIC_API_URL` | `https://api.uchess.dahalutsab.com.np` |
+| `FRONTEND_URL` | `https://uchess.dahalutsab.com.np` |
+| `CORS_ALLOWED_ORIGINS` | `https://uchess.dahalutsab.com.np` |
+| `UCHESS_ENGINE_THREADS` | `1` |
+| `UCHESS_ENGINE_HASH_MB` | `16` |
+
+A log saying `Connection to localhost:5432 refused` means the service ran without the `prod` profile.
+
 ## 4. Web app (Vercel)
 
 1. In Vercel: **Add New → Project**, import the `ChessBoardUI` repository. `vercel.json` sets the build

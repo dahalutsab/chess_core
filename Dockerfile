@@ -31,6 +31,9 @@ RUN jlink \
 FROM alpine:3.20
 ENV JAVA_HOME=/opt/jre \
     PATH=/opt/jre/bin:$PATH \
+    # The image runs the production profile unless told otherwise (docker-compose sets "docker"), so a deployment that
+    # is missing its settings fails with a clear message instead of quietly using development defaults
+    SPRING_PROFILES_ACTIVE=prod \
     # Uploaded files (e.g. bot avatars) are stored here; mount a volume to keep them
     APP_FILEPATH_LINUX=/data/ \
     # Low-footprint JVM settings: the serial GC has the smallest memory overhead, the heap scales with the container's
