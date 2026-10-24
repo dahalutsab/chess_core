@@ -92,6 +92,9 @@ public class Game extends Auditable {
      * The list of moveEntities played in the game, ordered by move number.
      */
     @OneToMany(mappedBy = "game", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    // Without an explicit order the database returns rows in storage order, which changes when rows are rewritten,
+    // and the moves would be replayed out of order
+    @OrderBy("id ASC")
     @NotNull
     List<MoveEntity> moveEntities = new ArrayList<>();
 
