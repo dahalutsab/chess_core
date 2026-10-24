@@ -30,6 +30,8 @@ import com.utsab.chess_engine.negamax.dto.UChessRequest;
 import com.utsab.chess_engine.negamax.dto.UChessResponse;
 import com.utsab.chess_engine.negamax.service.UChessService;
 import com.utsab.chess_engine.rating.RatingService;
+import com.utsab.chess_engine.events.EventHub;
+import com.utsab.chess_engine.core.evaluation.Score;
 import com.utsab.chess_engine.util.file.FileUrlUtil;
 import org.hibernate.Hibernate;
 import org.springframework.data.domain.PageRequest;
@@ -43,8 +45,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.net.URI;
+import java.time.Duration;
+import java.util.Map;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -68,6 +73,8 @@ public class UChessServiceImplementation implements UChessService {
     private final BotRepository botRepository;
     private final LoggedInUserUtil loggedInUserUtil;
     private final RatingService ratingService;
+    private final EventHub eventHub;
+    private final TransactionTemplate transactionTemplate;
     @PersistenceContext
     private final EntityManager entityManager;
 
@@ -221,6 +228,7 @@ public class UChessServiceImplementation implements UChessService {
             if (validMoves.stream().noneMatch(m -> Notation.toNotation(m).equals(uChessRequest.getMove()))) {
                 throw new InvalidRequestException("Invalid move requested: " + uChessRequest.getMove());
             }
+            answerDrawOfferByMoving(game, board.isWhiteToMove());
             GameClock.recordMove(game, board.isWhiteToMove(), now);
             game.getMoveEntities().add(MoveEntity.builder()
                     .game(game)
@@ -252,6 +260,7 @@ public class UChessServiceImplementation implements UChessService {
                         GameClock.snapshot(game, botIsWhite, System.currentTimeMillis()), game.getTermination());
             }
 
+            answerDrawOfferByMoving(game, botIsWhite);
             bestMove = Notation.toNotation(result.move());
             bestMoveSan = SAN.toSan(result.move(), board);
             // Use the engine's own move object: it carries the special-move flags (castling, en passant, ...)
@@ -270,6 +279,7 @@ public class UChessServiceImplementation implements UChessService {
             finish(game);
         }
         gameRepository.save(game);
+        notifyPlayers(game);
 
         return new UChessResponse(gameId, fen, bestMove, bestMoveSan, gameResult,
                 GameClock.snapshot(game, board.isWhiteToMove(), System.currentTimeMillis()), game.getTermination());
@@ -282,6 +292,21 @@ public class UChessServiceImplementation implements UChessService {
         GameClock.flag(game, board, flaggedWhite);
         finish(game);
         gameRepository.save(game);
+        notifyPlayers(game);
+    }
+
+    /** Tell everyone watching the game that it changed; they fetch the new state */
+    private void notifyPlayers(Game game) {
+        eventHub.publish(EventHub.gameTopic(game.getId()), "update",
+                Map.of("ply", game.getMoveEntities().size(), "result", game.getResult().name()));
+    }
+
+    /** Moving answers a draw offer from the other side: as on most chess sites, it declines it */
+    private static void answerDrawOfferByMoving(Game game, boolean moverIsWhite) {
+        String mover = moverIsWhite ? "WHITE" : "BLACK";
+        if (game.getDrawOfferedBy() != null && !game.getDrawOfferedBy().equals(mover)) {
+            game.setDrawOfferedBy(null);
+        }
     }
 
     /**
@@ -289,6 +314,7 @@ public class UChessServiceImplementation implements UChessService {
      */
     private void finish(Game game) {
         if (game.getEndTime() == null) game.setEndTime(LocalDateTime.now());
+        game.setDrawOfferedBy(null);
         ratingService.rate(game);
     }
 
@@ -319,6 +345,7 @@ public class UChessServiceImplementation implements UChessService {
             game.setTermination(Game.RESIGNATION);
             finish(game);
             gameRepository.save(game);
+            notifyPlayers(game);
             return toGameDto(game, board, null);
         }
     }
@@ -372,6 +399,164 @@ public class UChessServiceImplementation implements UChessService {
         return points;
     }
 
+    // ---- Draw offers ----
+
+    /** Bots accept a draw only after this many plies, and only when they are not better */
+    private static final int BOT_DRAW_MIN_PLIES = 30;
+    private static final int BOT_DRAW_MAX_ADVANTAGE_CP = 30;
+    private static final int BOT_DRAW_THINK_MS = 300;
+
+    /**
+     * Offer a draw, or accept the opponent's offer if they made one. A bot answers straight away: it accepts if the
+     * game has gone on a while and it doesn't think it is better.
+     */
+    @Override
+    public GameDto offerDraw(UUID gameId) {
+        synchronized (UChessEngineUCI.ENGINE) {
+            Game game = playableGame(gameId);
+            String me = colourOf(game, loggedInUserUtil.getLoggedInUser());
+            String opponent = "WHITE".equals(me) ? "BLACK" : "WHITE";
+            Board board = setUpPosition(game);
+
+            if (opponent.equals(game.getDrawOfferedBy())) {
+                agreeDraw(game, board);
+                return toGameDto(game, board, null);
+            }
+            if (me.equals(game.getDrawOfferedBy())) {
+                return toGameDto(game, board, null);
+            }
+
+            Player opponentPlayer = "WHITE".equals(opponent) ? game.getWhitePlayer() : game.getBlackPlayer();
+            if ("BOT".equals(getPlayerType(opponentPlayer))) {
+                if (botAcceptsDraw(game, board, "WHITE".equals(opponent))) {
+                    agreeDraw(game, board);
+                } else {
+                    throw new InvalidRequestException(getPlayerName(opponentPlayer) + " declined your draw offer");
+                }
+                return toGameDto(game, setUpPosition(game), null);
+            }
+
+            game.setDrawOfferedBy(me);
+            gameRepository.save(game);
+            notifyPlayers(game);
+            return toGameDto(game, board, null);
+        }
+    }
+
+    @Override
+    public GameDto declineDraw(UUID gameId) {
+        synchronized (UChessEngineUCI.ENGINE) {
+            Game game = playableGame(gameId);
+            String me = colourOf(game, loggedInUserUtil.getLoggedInUser());
+            if (game.getDrawOfferedBy() != null && !game.getDrawOfferedBy().equals(me)) {
+                game.setDrawOfferedBy(null);
+                gameRepository.save(game);
+                notifyPlayers(game);
+            }
+            return toGameDto(game, setUpPosition(game), null);
+        }
+    }
+
+    private void agreeDraw(Game game, Board board) {
+        GameClock.stop(game, board.isWhiteToMove(), System.currentTimeMillis());
+        game.setResult(GameResult.DRAW_BY_AGREEMENT);
+        finish(game);
+        gameRepository.save(game);
+        notifyPlayers(game);
+    }
+
+    private boolean botAcceptsDraw(Game game, Board board, boolean botIsWhite) {
+        if (game.getMoveEntities().size() < BOT_DRAW_MIN_PLIES) return false;
+        // Search directly rather than through thinkSync, which would answer from the opening book without an eval
+        int eval = UChessEngineUCI.ENGINE.think(BOT_DRAW_THINK_MS).eval();
+        int botEval = board.isWhiteToMove() == botIsWhite ? eval : -eval;
+        return !Score.isMateScore(botEval) && botEval <= BOT_DRAW_MAX_ADVANTAGE_CP;
+    }
+
+    /** The game, which must be in progress and include the logged-in user */
+    private Game playableGame(UUID gameId) {
+        Game game = gameRepository.findById(gameId)
+                .orElseThrow(() -> new InvalidRequestException("Game not found: " + gameId));
+        colourOf(game, loggedInUserUtil.getLoggedInUser());
+        if (game.getResult().isFinished()) throw new InvalidRequestException("Game is already over");
+        return game;
+    }
+
+    private static String colourOf(Game game, UserEntity user) {
+        if (game.getWhitePlayer().getId().equals(user.getId())) return "WHITE";
+        if (game.getBlackPlayer().getId().equals(user.getId())) return "BLACK";
+        throw new InvalidRequestException("You are not playing in this game");
+    }
+
+    // ---- Abandoned games ----
+
+    /** A game neither side moved in is aborted after this long */
+    private static final Duration ABORT_AFTER = Duration.ofMinutes(10);
+    /** An untimed game against a friend is lost by the player to move after this long without a move */
+    private static final Duration PVP_ABANDON_AFTER = Duration.ofHours(24);
+    /** An untimed game against a bot waits longer, as only the user's own game is held up */
+    private static final Duration PVB_ABANDON_AFTER = Duration.ofDays(7);
+
+    /**
+     * End games that were left unfinished: timed games whose player to move ran out of time, games where a side
+     * never moved, and untimed games nobody has moved in for a long time.
+     *
+     * @return how many games were ended
+     */
+    @Override
+    public int sweepAbandonedGames() {
+        LocalDateTime now = LocalDateTime.now();
+        int ended = 0;
+        for (UUID gameId : gameRepository.findIdsInProgressInactiveSince(now.minusMinutes(1))) {
+            // The scheduler has no request-scoped session, so each game is handled in its own transaction
+            Boolean endedThis = transactionTemplate.execute(status -> sweepGame(gameId, now));
+            if (Boolean.TRUE.equals(endedThis)) ended++;
+        }
+        return ended;
+    }
+
+    private boolean sweepGame(UUID gameId, LocalDateTime now) {
+        synchronized (UChessEngineUCI.ENGINE) {
+            Game game = gameRepository.findById(gameId).orElse(null);
+            if (game == null || game.getResult().isFinished()) return false;
+            Board board = setUpPosition(game);
+            boolean whiteToMove = board.isWhiteToMove();
+            LocalDateTime lastActivity = lastActivity(game);
+
+            if (GameClock.isFlagged(game, whiteToMove, System.currentTimeMillis())) {
+                finishOnTime(game, board, whiteToMove);
+            } else if (game.getMoveEntities().size() < 2 && lastActivity.isBefore(now.minus(ABORT_AFTER))) {
+                endAbandoned(game, whiteToMove, Game.ABORTED);
+            } else if (!GameClock.isTimed(game) && lastActivity.isBefore(now.minus(
+                    game.getGameType() == GameType.PVP ? PVP_ABANDON_AFTER : PVB_ABANDON_AFTER))) {
+                endAbandoned(game, whiteToMove, Game.ABANDONED);
+            } else {
+                return false;
+            }
+            log.info("[UChessService] Ended abandoned game {}: {} {}", gameId, game.getResult(), game.getTermination());
+            return true;
+        }
+    }
+
+    /**
+     * When the game last changed. Adding a move doesn't touch the game row itself, so the newest move counts too.
+     */
+    private static LocalDateTime lastActivity(Game game) {
+        LocalDateTime latest = Objects.requireNonNullElse(game.getLastModifiedDate(), game.getStartTime());
+        for (MoveEntity move : game.getMoveEntities()) {
+            if (move.getCreatedDate() != null && move.getCreatedDate().isAfter(latest)) latest = move.getCreatedDate();
+        }
+        return latest;
+    }
+
+    private void endAbandoned(Game game, boolean whiteToMove, String termination) {
+        game.setResult(whiteToMove ? GameResult.BLACK_WIN : GameResult.WHITE_WIN);
+        game.setTermination(termination);
+        finish(game);
+        gameRepository.save(game);
+        notifyPlayers(game);
+    }
+
     /** Load the game's position into the engine and return the board */
     private Board setUpPosition(Game game) {
         List<Move> moves = game.getMoveEntities().stream().map(MoveEntity::getUci).map(Notation::fromCombinedNotation).toList();
@@ -402,7 +587,8 @@ public class UChessServiceImplementation implements UChessService {
                 board.isWhiteToMove() ? "WHITE" : "BLACK",
                 GameClock.snapshot(game, board.isWhiteToMove(), System.currentTimeMillis()),
                 game.getTermination(),
-                yourColor
+                yourColor,
+                game.getDrawOfferedBy()
         );
     }
 
@@ -504,11 +690,12 @@ public class UChessServiceImplementation implements UChessService {
         int wins = (int) gameRepository.countWins(userId);
         int losses = (int) gameRepository.countLosses(userId);
         int draws = (int) gameRepository.countWithResults(userId, GameResult.draws());
+        int played = (int) gameRepository.countCounted(userId);
         int rating = currentUser.currentRating();
         int peak = getRatingHistory().stream().mapToInt(RatingPoint::rating).max().orElse(rating);
 
         GameStatsResponse stats = new GameStatsResponse(
-                (int) games.getTotalElements(), wins, losses, draws, rating, Math.max(peak, rating), currentUser.ratedGameCount());
+                played, wins, losses, draws, rating, Math.max(peak, rating), currentUser.ratedGameCount());
 
         return new HistoryResponse(stats, gamesResponses);
     }

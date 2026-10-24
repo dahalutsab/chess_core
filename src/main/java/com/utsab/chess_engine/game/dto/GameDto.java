@@ -27,6 +27,8 @@ public record GameDto(
         ClockDto clock,
         String termination,
         /* The colour the requesting user plays ("WHITE" or "BLACK"), or null when they are not playing in this game */
-        String yourColor
+        String yourColor,
+        /* "WHITE" or "BLACK" while that side's draw offer awaits an answer */
+        String drawOfferedBy
 ) {}
 

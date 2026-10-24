@@ -54,6 +54,16 @@ public class AuthController extends BaseController {
     }
 
     @Operation(
+            summary = "Keep a guest account",
+            description = "Registers the signed-in guest account with an email and password, keeping its games and rating."
+    )
+    @PostMapping("/guest/claim")
+    public ResponseEntity<ApiResponse<UserRegistrationResponse>> claimGuestAccount(
+            @ModelAttribute UserRegistrationRequest registration) {
+        return successResponse(authService.claimGuestAccount(registration), AuthResponseMessages.USER_REGISTERED);
+    }
+
+    @Operation(
             summary = "Refresh JWT access token",
             description = "Generates a new access token using a valid refresh token."
     )

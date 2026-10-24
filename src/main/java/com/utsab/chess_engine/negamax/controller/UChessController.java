@@ -1,6 +1,9 @@
 package com.utsab.chess_engine.negamax.controller;
 
 import com.utsab.chess_engine.common.BaseController;
+import com.utsab.chess_engine.events.EventHub;
+import org.springframework.http.MediaType;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import com.utsab.chess_engine.game.dto.GameDto;
 import com.utsab.chess_engine.game.dto.history.HistoryResponse;
 import com.utsab.chess_engine.negamax.dto.NewGameRequest;
@@ -23,6 +26,7 @@ import static com.utsab.chess_engine.common.constants.APIConstants.API_BASE;
 @RequiredArgsConstructor
 public class UChessController extends BaseController {
     private final UChessService uChessService;
+    private final EventHub eventHub;
 
     @PostMapping("/new")
     public ResponseEntity<ApiResponse<GameDto>> getBestMove(@RequestBody NewGameRequest newGameRequest) {
@@ -45,6 +49,23 @@ public class UChessController extends BaseController {
     @PostMapping("/{gameId}/resign")
     public ResponseEntity<ApiResponse<GameDto>> resign(@PathVariable UUID gameId) {
         return successResponse(uChessService.resign(gameId), "Game resigned");
+    }
+
+    /** Offer a draw, or accept the opponent's offer */
+    @PostMapping("/{gameId}/draw")
+    public ResponseEntity<ApiResponse<GameDto>> offerDraw(@PathVariable UUID gameId) {
+        return successResponse(uChessService.offerDraw(gameId), "Draw offered");
+    }
+
+    @DeleteMapping("/{gameId}/draw")
+    public ResponseEntity<ApiResponse<GameDto>> declineDraw(@PathVariable UUID gameId) {
+        return successResponse(uChessService.declineDraw(gameId), "Draw offer declined");
+    }
+
+    /** A stream of "update" events whenever the game changes, and "chat" events for its messages */
+    @GetMapping(value = "/{gameId}/events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter gameEvents(@PathVariable UUID gameId) {
+        return eventHub.subscribe(EventHub.gameTopic(gameId));
     }
 
     @GetMapping("/rating-history")

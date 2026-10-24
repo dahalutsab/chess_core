@@ -22,15 +22,17 @@ public interface GameRepository extends JpaRepository<Game, UUID> {
 
     @Query("""
             select count(g) from Game g
-            where (g.whitePlayer.id = :playerId and g.result = com.utsab.chess_engine.game.entity.enums.GameResult.WHITE_WIN)
-               or (g.blackPlayer.id = :playerId and g.result = com.utsab.chess_engine.game.entity.enums.GameResult.BLACK_WIN)
+            where ((g.whitePlayer.id = :playerId and g.result = com.utsab.chess_engine.game.entity.enums.GameResult.WHITE_WIN)
+               or (g.blackPlayer.id = :playerId and g.result = com.utsab.chess_engine.game.entity.enums.GameResult.BLACK_WIN))
+              and (g.termination is null or g.termination <> 'ABORTED')
             """)
     long countWins(@Param("playerId") Long playerId);
 
     @Query("""
             select count(g) from Game g
-            where (g.whitePlayer.id = :playerId and g.result = com.utsab.chess_engine.game.entity.enums.GameResult.BLACK_WIN)
-               or (g.blackPlayer.id = :playerId and g.result = com.utsab.chess_engine.game.entity.enums.GameResult.WHITE_WIN)
+            where ((g.whitePlayer.id = :playerId and g.result = com.utsab.chess_engine.game.entity.enums.GameResult.BLACK_WIN)
+               or (g.blackPlayer.id = :playerId and g.result = com.utsab.chess_engine.game.entity.enums.GameResult.WHITE_WIN))
+              and (g.termination is null or g.termination <> 'ABORTED')
             """)
     long countLosses(@Param("playerId") Long playerId);
 
@@ -39,6 +41,21 @@ public interface GameRepository extends JpaRepository<Game, UUID> {
             where (g.whitePlayer.id = :playerId or g.blackPlayer.id = :playerId) and g.result in :results
             """)
     long countWithResults(@Param("playerId") Long playerId, @Param("results") Collection<GameResult> results);
+
+    /** The player's games, leaving out aborted ones */
+    @Query("""
+            select count(g) from Game g
+            where (g.whitePlayer.id = :playerId or g.blackPlayer.id = :playerId)
+              and (g.termination is null or g.termination <> 'ABORTED')
+            """)
+    long countCounted(@Param("playerId") Long playerId);
+
+    @Query("""
+            select g.id from Game g
+            where g.result = com.utsab.chess_engine.game.entity.enums.GameResult.IN_PROGRESS
+              and coalesce(g.lastModifiedDate, g.startTime) < :since
+            """)
+    java.util.List<UUID> findIdsInProgressInactiveSince(@Param("since") LocalDateTime since);
 
     /** Whether the player has a game in progress that was started after the given time */
     @Query("""

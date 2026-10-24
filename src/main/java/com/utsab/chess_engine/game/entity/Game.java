@@ -34,6 +34,13 @@ public class Game extends Auditable {
 
     /** {@link #termination} of a game a player resigned */
     public static final String RESIGNATION = "RESIGNATION";
+    /** {@link #termination} of a game the player to move left without finishing */
+    public static final String ABANDONED = "ABANDONED";
+    /**
+     * {@link #termination} of a game that was left before both sides moved. It counts for nobody: it is unrated and
+     * left out of statistics. (The result still names a winner, as the result column has no value for it.)
+     */
+    public static final String ABORTED = "ABORTED";
 
     /**
      * Unique identifier for the game.
@@ -130,6 +137,10 @@ public class Game extends Auditable {
 
     @Column(name = "black_rating_change")
     Integer blackRatingChange;
+
+    /** "WHITE" or "BLACK" while that side's draw offer awaits an answer */
+    @Column(name = "draw_offered_by")
+    String drawOfferedBy;
 
     /**
      * Returns the list of moves in the game, guaranteed to be non-null.

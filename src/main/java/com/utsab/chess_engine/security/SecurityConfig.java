@@ -7,6 +7,7 @@ import com.utsab.chess_engine.security.jwt_auth.CustomExceptionHandlingFilter;
 import com.utsab.chess_engine.security.jwt_auth.JwtAccessTokenFilter;
 import com.utsab.chess_engine.security.jwt_auth.JwtTokenUtils;
 import lombok.RequiredArgsConstructor;
+import jakarta.servlet.DispatcherType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -47,6 +48,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
+                    // Event streams finish on an async dispatch, after the request was already authorised
+                    auth.dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll();
                     // Checked before the whitelist, which would otherwise make these public
                     WHITE_LIST_URLS.AUTHENTICATED_AUTH_URLS.forEach(url -> auth.requestMatchers(url).authenticated());
                     for (WHITE_LIST_URLS entry : WHITE_LIST_URLS.values()) {

@@ -17,6 +17,12 @@ public interface AuthService {
     /** Create a guest account and sign in to it, for playing without registering */
     AuthResponse loginAsGuest(HttpServletResponse response);
 
+    /**
+     * Turn the logged-in guest account into a registered one, keeping its games and rating. The account then needs
+     * its email verified like any new registration.
+     */
+    UserRegistrationResponse claimGuestAccount(UserRegistrationRequest registration);
+
     AuthResponse getAccessTokenUsingRefreshToken(@CookieValue(name = "refresh_token", required = false) String refreshToken);
 
     ForgotPasswordResponse forgotPassword(String email);

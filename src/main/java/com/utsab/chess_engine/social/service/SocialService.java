@@ -3,6 +3,7 @@ package com.utsab.chess_engine.social.service;
 import com.utsab.chess_engine.exceptions.custom.InvalidRequestException;
 import com.utsab.chess_engine.game.clock.GameClock;
 import com.utsab.chess_engine.game.repository.GameRepository;
+import com.utsab.chess_engine.events.EventHub;
 import com.utsab.chess_engine.negamax.dto.PreferredColor;
 import com.utsab.chess_engine.negamax.service.UChessService;
 import com.utsab.chess_engine.social.dto.*;
@@ -48,6 +49,12 @@ public class SocialService {
     private final ChallengeRepository challengeRepository;
     private final GameRepository gameRepository;
     private final UChessService gameService;
+    private final EventHub eventHub;
+
+    /** Tell a user their requests or challenges changed; their app refetches the summary */
+    private void nudge(UserEntity user) {
+        eventHub.publish(EventHub.userTopic(user.getId()), "summary", Map.of());
+    }
 
     // ---- Presence & summary ----
 
@@ -138,6 +145,7 @@ public class SocialService {
             if (f.getAddressee().getId().equals(me.getId())) {
                 // They already asked us: sending a request back accepts theirs
                 accept(f);
+                nudge(other);
                 return summarize(other, "FRIEND", null);
             }
             return summarize(other, "REQUEST_SENT", f.getId());
@@ -149,6 +157,7 @@ public class SocialService {
                 .status(Friendship.Status.PENDING)
                 .createdAt(LocalDateTime.now())
                 .build());
+        nudge(other);
         return summarize(other, "REQUEST_SENT", request.getId());
     }
 
@@ -159,6 +168,7 @@ public class SocialService {
                 .filter(r -> r.getStatus() == Friendship.Status.PENDING && r.getAddressee().getId().equals(me.getId()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Friend request not found"));
         accept(f);
+        nudge(f.getRequester());
         return summarize(f.getRequester(), "FRIEND", null);
     }
 
@@ -177,6 +187,7 @@ public class SocialService {
                 .filter(r -> r.getAddressee().getId().equals(me.getId()) || r.getRequester().getId().equals(me.getId()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Friend request not found"));
         friendshipRepository.delete(f);
+        nudge(f.other(me.getId()));
     }
 
     @Transactional
@@ -220,6 +231,7 @@ public class SocialService {
                 .status(Challenge.Status.PENDING)
                 .createdAt(LocalDateTime.now())
                 .build());
+        nudge(opponent);
         return toDto(challenge, me);
     }
 
@@ -237,6 +249,7 @@ public class SocialService {
         challenge.setGameId(gameId);
         challenge.setStatus(Challenge.Status.ACCEPTED);
         challengeRepository.save(challenge);
+        nudge(challenge.getChallenger());
         log.info("[SocialService] Challenge {} accepted, game {}", challengeId, gameId);
         return toDto(challenge, me);
     }
@@ -254,6 +267,7 @@ public class SocialService {
         if (challenge.getStatus() == Challenge.Status.PENDING) {
             challenge.setStatus(mine ? Challenge.Status.CANCELLED : Challenge.Status.DECLINED);
             challengeRepository.save(challenge);
+            nudge(mine ? challenge.getOpponent() : challenge.getChallenger());
         }
         return toDto(challenge, me);
     }

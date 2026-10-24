@@ -1,6 +1,10 @@
 package com.utsab.chess_engine.social.controller;
 
 import com.utsab.chess_engine.common.BaseController;
+import com.utsab.chess_engine.events.EventHub;
+import com.utsab.chess_engine.util.logged_in_user.LoggedInUserUtil;
+import org.springframework.http.MediaType;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import com.utsab.chess_engine.response.ApiResponse;
 import com.utsab.chess_engine.social.dto.*;
 import com.utsab.chess_engine.social.service.SocialService;
@@ -25,11 +29,19 @@ import static com.utsab.chess_engine.common.constants.APIConstants.API_BASE;
 public class SocialController extends BaseController {
 
     private final SocialService socialService;
+    private final EventHub eventHub;
+    private final LoggedInUserUtil loggedInUserUtil;
 
     /** Polled while the app is open: pending requests and challenges. Also marks the user as online. */
     @GetMapping("/social/summary")
     public ResponseEntity<ApiResponse<SocialSummary>> summary() {
         return successResponse(socialService.summary(), "Summary fetched successfully");
+    }
+
+    /** A stream of "summary" events whenever the user's requests or challenges change */
+    @GetMapping(value = "/social/events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter events() {
+        return eventHub.subscribe(EventHub.userTopic(loggedInUserUtil.getLoggedInUser().getId()));
     }
 
     @GetMapping("/friends")

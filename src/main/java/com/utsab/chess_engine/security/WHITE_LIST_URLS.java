@@ -12,7 +12,7 @@ public enum WHITE_LIST_URLS {
     FILES("/files/**", new HttpMethod[]{HttpMethod.GET});
 
     /** Endpoints under the public /auth prefix that are only meaningful for a signed-in user */
-    public static final java.util.Set<String> AUTHENTICATED_AUTH_URLS = java.util.Set.of("/api/v1/auth/current-user");
+    public static final java.util.Set<String> AUTHENTICATED_AUTH_URLS = java.util.Set.of("/api/v1/auth/current-user", "/api/v1/auth/guest/claim");
 
     private final String url;
     private final HttpMethod[] methods;

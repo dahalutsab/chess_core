@@ -28,6 +28,15 @@ public interface UChessService {
     /** Start a game between two users, e.g. when a challenge is accepted. Returns the new game's id. */
     UUID startPvpGame(UserEntity challenger, UserEntity opponent, PreferredColor challengerColor, String timeControl);
 
+    /** Offer a draw in the logged-in user's game, or accept the opponent's offer */
+    GameDto offerDraw(UUID gameId);
+
+    /** Decline the opponent's draw offer */
+    GameDto declineDraw(UUID gameId);
+
+    /** End games that were left unfinished. Returns how many were ended. */
+    int sweepAbandonedGames();
+
     /** The logged-in user's rating after each of their rated games, oldest first */
     List<RatingPoint> getRatingHistory();
 

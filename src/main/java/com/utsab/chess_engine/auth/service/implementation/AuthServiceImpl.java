@@ -148,6 +148,45 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
+    @Override
+    @Transactional
+    public UserRegistrationResponse claimGuestAccount(UserRegistrationRequest registration) {
+        UserEntity guest = loggedInUserUtil.getLoggedInUser();
+        if (!guest.isGuestAccount()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This account is already registered");
+        }
+        if (registration.fullName() == null || registration.fullName().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Full name must not be empty");
+        }
+        if (!EmailValidator.isValid(registration.userEmail()) || registration.userEmail().endsWith(GUEST_EMAIL_DOMAIN)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, AuthExceptionMessages.INVALID_EMAIL);
+        }
+        if (registration.password() == null || registration.password().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must not be empty");
+        }
+        if (userInfoRepository.findByEmailId(registration.userEmail()).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "An account with this email already exists");
+        }
+
+        guest.setFullName(registration.fullName().trim());
+        guest.setEmailId(registration.userEmail());
+        guest.setPassword(new BCryptPasswordEncoder().encode(registration.password()));
+        guest.setGuest(false);
+        guest.setVerified(false);
+        if (registration.profileImage() != null && !registration.profileImage().isEmpty()) {
+            FileType fileType = fileHandlerUtil.determineFileType(Objects.requireNonNull(registration.profileImage().getOriginalFilename()));
+            if (fileType != FileType.IMAGE) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, AuthExceptionMessages.INVALID_FILE_TYPE);
+            }
+            guest.setProfileImage(fileHandlerUtil.saveFile(registration.profileImage(), registration.userEmail()).getFileDownloadUri());
+        }
+
+        OTP otp = otpService.saveOTP(guest, OTPPurpose.REGISTER);
+        mailService.sendRegistrationMail(guest, otp, URI.create(this.frontEndUrl + verifyEmailUrl + "?email=" + registration.userEmail()));
+        log.info("[AuthServiceImpl:claimGuestAccount] Guest account {} claimed as {}", guest.getId(), registration.userEmail());
+        return new UserRegistrationResponse(userInfoRepository.save(guest), otp.getExpiryTime());
+    }
+
     private static final String GUEST_EMAIL_DOMAIN = "@guest.uchess.local";
     private static final SecureRandom RANDOM = new SecureRandom();
 
