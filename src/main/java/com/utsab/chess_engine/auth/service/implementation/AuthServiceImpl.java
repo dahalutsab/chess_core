@@ -28,7 +28,6 @@ import com.utsab.chess_engine.util.file.FileHandlerUtil;
 import com.utsab.chess_engine.util.file.FileType;
 import com.utsab.chess_engine.util.logged_in_user.LoggedInUserUtil;
 import com.utsab.chess_engine.util.validator.EmailValidator;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +44,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWEObject;
+import com.nimbusds.jose.crypto.RSADecrypter;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.utsab.chess_engine.config.RSAKeyRecord;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
+
 import java.net.URI;
+import java.text.ParseException;
+import java.time.Duration;
+import java.time.Instant;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Objects;
@@ -65,6 +75,11 @@ public class AuthServiceImpl implements AuthService {
     private final OTPService otpService;
     private final MailService mailService;
     private final LoggedInUserUtil loggedInUserUtil;
+
+    private final RSAKeyRecord rsaKeyRecord;
+
+    @Value("${app.cookie.secure:true}")
+    private boolean cookieSecure;
 
     @Value("${frontend.domain}")
     private String frontEndUrl;
@@ -199,12 +214,25 @@ public class AuthServiceImpl implements AuthService {
         refreshTokenRepo.save(refreshTokenEntity);
     }
 
+    /**
+     * The refresh token goes in an HTTP-only cookie scoped to the auth endpoints. SameSite=Lax still sends it from the
+     * web app on a sibling subdomain (same site), but not from other sites.
+     */
     private void createRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
-        Cookie refreshTokenCookie = new Cookie("refresh_token", refreshToken);
-        refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setSecure(true);
-        refreshTokenCookie.setMaxAge(15 * 24 * 60 * 60);
-        response.addCookie(refreshTokenCookie);
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie(refreshToken, Duration.ofDays(15), cookieSecure).toString());
+    }
+
+    public static final String REFRESH_COOKIE = "refresh_token";
+    public static final String REFRESH_COOKIE_PATH = "/api/v1/auth";
+
+    public static ResponseCookie refreshCookie(String value, Duration maxAge, boolean secure) {
+        return ResponseCookie.from(REFRESH_COOKIE, value)
+                .httpOnly(true)
+                .secure(secure)
+                .sameSite("Lax")
+                .path(REFRESH_COOKIE_PATH)
+                .maxAge(maxAge)
+                .build();
     }
 
     @Override
@@ -216,9 +244,15 @@ public class AuthServiceImpl implements AuthService {
         // Validate refresh token from database
         var refreshTokenEntity = refreshTokenRepo.findByRefreshToken(refreshToken)
                 .filter(tokens -> !tokens.isRevoked())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, AuthExceptionMessages.REFRESH_TOKEN_REVOKED));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, AuthExceptionMessages.REFRESH_TOKEN_REVOKED));
 
         UserEntity userEntity = refreshTokenEntity.getUser();
+
+        // The token must be genuine, unexpired and still belong to the account (whose email may have changed, e.g.
+        // when a guest registers), and the account must still be able to sign in
+        if (!isValidRefreshToken(refreshToken, userEntity.getEmailId()) || !userEntity.isVerified() || !userEntity.isActive()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, AuthExceptionMessages.REFRESH_TOKEN_REVOKED);
+        }
 
         // Generate new access token
         Authentication authentication = createAuthenticationObject(userEntity);
@@ -228,9 +262,23 @@ public class AuthServiceImpl implements AuthService {
 
         return AuthResponse.builder()
                 .accessToken(accessToken)
-                .accessTokenExpiry(5 * 60)
+                .accessTokenExpiry(150 * 60)
                 .tokenType(TokenType.Bearer)
                 .build();
+    }
+
+    private boolean isValidRefreshToken(String token, String expectedSubject) {
+        try {
+            JWEObject jwe = JWEObject.parse(token);
+            jwe.decrypt(new RSADecrypter(rsaKeyRecord.rsaPrivateKey()));
+            JWTClaimsSet claims = JWTClaimsSet.parse(jwe.getPayload().toJSONObject());
+            return "REFRESH_TOKEN".equals(claims.getStringClaim("scope"))
+                    && expectedSubject.equals(claims.getSubject())
+                    && claims.getExpirationTime() != null
+                    && claims.getExpirationTime().toInstant().isAfter(Instant.now());
+        } catch (ParseException | JOSEException e) {
+            return false;
+        }
     }
 
     private static Authentication createAuthenticationObject(UserEntity userEntity) {

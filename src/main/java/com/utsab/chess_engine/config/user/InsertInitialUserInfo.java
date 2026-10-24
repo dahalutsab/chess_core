@@ -6,6 +6,7 @@ import com.utsab.chess_engine.user.role.entity.UserRole;
 import com.utsab.chess_engine.user.role.repository.RolesRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,21 +23,30 @@ public class InsertInitialUserInfo implements CommandLineRunner {
     private final UserInfoRepository userInfoRepository;
     private final RolesRepository rolesRepository;
     private final PasswordEncoder passwordEncoder;
-    private static final String ADMIN_PASSWORD = "Admin@123";
-    private static final String ADMIN_EMAIL = "admin@uchess.com";
-    private static final String ADMIN_NAME = "Utsab Dahal";
+    // From configuration (ADMIN_EMAIL, ADMIN_NAME, ADMIN_PASSWORD), so no password is committed; only the
+    // development profiles have a default
+    @Value("${app.admin.email}")
+    private String adminEmail;
+    @Value("${app.admin.name}")
+    private String adminName;
+    @Value("${app.admin.password:}")
+    private String adminPassword;
 
     @Override
     public void run(String... args) {
-        if (userInfoRepository.findByEmailId(ADMIN_EMAIL).isEmpty()) {
+        if (adminPassword == null || adminPassword.isBlank()) {
+            log.info("No admin password configured (ADMIN_PASSWORD); skipping the admin account.");
+            return;
+        }
+        if (userInfoRepository.findByEmailId(adminEmail).isEmpty()) {
             UserEntity admin = new UserEntity();
-            admin.setFullName(ADMIN_NAME);
-            admin.setPassword(passwordEncoder.encode(ADMIN_PASSWORD));
+            admin.setFullName(adminName);
+            admin.setPassword(passwordEncoder.encode(adminPassword));
             admin.setRoles(List.of(
                     rolesRepository.findByName(UserRole.ADMIN.toString())
                             .orElseThrow(() -> new RuntimeException("ADMIN Role not found"))
             ));
-            admin.setEmailId(ADMIN_EMAIL);
+            admin.setEmailId(adminEmail);
             admin.setVerified(true);
             userInfoRepository.save(admin);
             log.info("Admin user inserted.");

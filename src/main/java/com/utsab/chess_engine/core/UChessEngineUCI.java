@@ -34,6 +34,11 @@ public class UChessEngineUCI {
         String command = "";
         while (!command.equals("quit")) {
             command = readCommand();
+            if (command == null) {
+                // Standard input is closed, as when running as a server (e.g. in a container): there will never be a
+                // command, so stop listening rather than spin on an empty input
+                return;
+            }
             if (!command.isEmpty()) {
                 String commandType = command.trim().toLowerCase().split(" ")[0];
                 switch (commandType) {
@@ -243,14 +248,17 @@ public class UChessEngineUCI {
         return !valueString.isBlank() ? Integer.parseInt(valueString) : 0;
     }
 
+    /**
+     * The next command from standard input: "" for a blank line, or null once the input is closed.
+     */
     public static String readCommand() {
         try {
             String line = SCANNER.nextLine();
             if (!line.isBlank()) {
                 return line;
             }
-        } catch (NoSuchElementException e) {
-            // do nothing
+        } catch (NoSuchElementException | IllegalStateException e) {
+            return null;
         }
         return "";
     }

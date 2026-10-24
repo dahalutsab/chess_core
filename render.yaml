@@ -1,0 +1,44 @@
+# Render Blueprint for the UChess API. See DEPLOYMENT.md for the steps and for the values marked "sync: false",
+# which are secrets entered in the Render dashboard rather than committed here.
+services:
+  - type: web
+    name: uchess-api
+    runtime: docker
+    plan: free
+    # Closest Render region to Nepal
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/v1/bots
+    domains:
+      - api.uchess.dahalutsab.com.np
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: PUBLIC_API_URL
+        value: https://api.uchess.dahalutsab.com.np
+      - key: FRONTEND_URL
+        value: https://uchess.dahalutsab.com.np
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://uchess.dahalutsab.com.np
+      # The free plan has a fraction of a CPU: one search thread and a small hash table suit it
+      - key: UCHESS_ENGINE_THREADS
+        value: "1"
+      - key: UCHESS_ENGINE_HASH_MB
+        value: "16"
+      # Secrets
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_USERNAME
+        sync: false
+      - key: DATABASE_PASSWORD
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      - key: MAIL_HOST
+        sync: false

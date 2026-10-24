@@ -1,0 +1,71 @@
+# Production (e.g. Render). Every deployment-specific value and every secret comes from the environment; see
+# DEPLOYMENT.md for the full list.
+server:
+  # Render tells the service which port to listen on
+  port: ${PORT:8181}
+  address: 0.0.0.0
+  tomcat:
+    threads:
+      max: 50
+      min-spare: 4
+  # Public address of this API, used for links to uploaded files
+  host: ${PUBLIC_API_URL:https://api.uchess.dahalutsab.com.np}
+  base-url: ${PUBLIC_API_URL:https://api.uchess.dahalutsab.com.np}/
+  forward-headers-strategy: framework
+
+spring:
+  application:
+    name: chess engine
+  servlet:
+    multipart:
+      max-file-size: 8MB
+      max-request-size: 8MB
+
+  datasource:
+    # e.g. jdbc:postgresql://<host>/<db>?sslmode=require
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      # Free hosted databases allow few connections, and this app needs few
+      maximum-pool-size: ${DATABASE_POOL_SIZE:5}
+      minimum-idle: 1
+
+  jpa:
+    show_sql: false
+    hibernate:
+      ddl-auto: update
+    defer-datasource-initialization: true
+    properties:
+      dialect: org.hibernate.dialect.PostgreSQLDialect
+
+jwt:
+  # Signing keys for login tokens. On Render, add them as Secret Files, which appear under /etc/secrets.
+  rsa-private-key: ${JWT_PRIVATE_KEY_LOCATION:file:/etc/secrets/jwt_private_key.pem}
+  rsa-public-key: ${JWT_PUBLIC_KEY_LOCATION:file:/etc/secrets/jwt_public_key.pem}
+
+app:
+  filepath:
+    windows: ${FILE_STORAGE_PATH:/data/}
+    linux: ${FILE_STORAGE_PATH:/data/}
+    mac: ${FILE_STORAGE_PATH:/data/}
+  cookie:
+    secure: true
+
+frontend:
+  # Public address of the web app, used in email links
+  domain: ${FRONTEND_URL:https://uchess.dahalutsab.com.np}
+  forgot_password: /auth/reset-password
+  verify_email: /auth/verify-email
+
+otp:
+  expiryInSeconds: 300
+
+springdoc:
+  api-docs:
+    path: /v1/api-docs
+    enabled: false
+  swagger-ui:
+    path: /v1/swagger
+    enabled: false

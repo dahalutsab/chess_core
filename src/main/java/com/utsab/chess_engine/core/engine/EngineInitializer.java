@@ -52,7 +52,25 @@ public class EngineInitializer {
         Supplier<Evaluation> evaluator = () -> new Evaluator(config);
         TranspositionTable transpositionTable = new TranspositionTable(config.getDefaultHashSizeMb());
         Search searcher = new LazySMPSearcher(config, moveGenerator, moveOrderer, evaluator, transpositionTable);
-        return new Engine(config, book, moveGenerator.get(), searcher);
+        Engine engine = new Engine(config, book, moveGenerator.get(), searcher);
+
+        // The engine is created before Spring starts, so it reads its deployment settings from the environment.
+        // On a small host one search thread does as well as several, and uses less memory.
+        Integer threads = intFromEnvironment("UCHESS_ENGINE_THREADS");
+        if (threads != null) engine.setThreadCount(threads);
+        Integer hashMb = intFromEnvironment("UCHESS_ENGINE_HASH_MB");
+        if (hashMb != null) engine.setHashSize(hashMb);
+        return engine;
+    }
+
+    private static Integer intFromEnvironment(String name) {
+        String value = System.getenv(name);
+        if (value == null || value.isBlank()) return null;
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     /**
